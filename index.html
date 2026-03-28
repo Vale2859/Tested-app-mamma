@@ -125,6 +125,23 @@
         <div id="doctorMonthPrestazioni" class="cards-list"></div>
       </section>
 
+
+
+      <section id="prestazioniPage" class="page">
+        <div class="page-head">
+          <h2>Prestazioni</h2>
+          <button class="small-action-btn" type="button" id="addPrestazioneBtn">+ Nuova</button>
+        </div>
+
+        <div class="filter-control" style="margin-bottom:12px;">
+          <label for="prestazioniDoctorFilter">Medico</label>
+          <select id="prestazioniDoctorFilter"></select>
+        </div>
+
+        <div class="page-subtitle">Le prestazioni salvate qui compariranno come pillole nella nuova registrazione e imposteranno in automatico la % del medico.</div>
+        <div id="prestazioniList" class="simple-list"></div>
+      </section>
+
       <section id="reportPage" class="page">
         <div class="page-head">
           <h2>Report</h2>
@@ -214,6 +231,10 @@
         <span class="menu-icon">👨‍⚕️</span>
         <span class="menu-label">Medici</span>
       </button>
+      <button class="menu-btn" data-page="prestazioniPage" type="button">
+        <span class="menu-icon">🧩</span>
+        <span class="menu-label">Prestazioni</span>
+      </button>
       <button class="menu-btn" data-page="reportPage" type="button">
         <span class="menu-icon">📊</span>
         <span class="menu-label">Report</span>
@@ -283,6 +304,17 @@
         <button class="secondary-btn" type="button" id="cancelPopupBtn">Annulla</button>
         <button class="primary-btn" type="button" id="savePopupBtn">Salva</button>
       </div>
+    </div>
+  </div>
+
+
+  <div id="pinOverlay" class="pin-overlay hidden">
+    <div class="pin-box card">
+      <div class="pin-title">Accesso protetto</div>
+      <div class="pin-subtitle">Inserisci il PIN per entrare in ANVAMED</div>
+      <input id="pinInput" class="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="PIN" />
+      <button id="pinUnlockBtn" class="primary-btn pin-btn" type="button">Entra</button>
+      <div id="pinError" class="pin-error hidden">PIN non corretto</div>
     </div>
   </div>
 

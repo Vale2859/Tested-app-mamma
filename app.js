@@ -1,15 +1,15 @@
 const STORAGE_KEYS = {
+  doctors: "anvamed_doctors_v5",
+  entries: "anvamed_entries_v5",
+  invoiceStates: "anvamed_invoice_states_v5",
+  uiState: "anvamed_ui_state_v5"
+};
+
+const LEGACY_STORAGE_KEYS = {
   doctors: "anvamed_doctors_v4",
   entries: "anvamed_entries_v4",
   invoiceStates: "anvamed_invoice_states_v4",
   uiState: "anvamed_ui_state_v4"
-};
-
-const LEGACY_STORAGE_KEYS = {
-  doctors: "anvamed_doctors_v3",
-  entries: "anvamed_entries_v3",
-  invoiceStates: "anvamed_invoice_states_v3",
-  uiState: "anvamed_ui_state_v3"
 };
 
 const PIE_COLORS = ["#2d8cff", "#59cf82", "#9a62d8", "#eead42", "#dd5a52", "#39b86b", "#6e7b88"];
@@ -30,6 +30,9 @@ let homeFilterValue = "";
 let reportFilterType = "giorno";
 let reportFilterValue = "";
 let currentPage = "homePage";
+let isUnlocked = false;
+let lastHiddenAt = 0;
+const ACCESS_PIN = "1003";
 
 function pad(value) { return String(value).padStart(2, "0"); }
 function getLocalTodayDate() { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), now.getDate()); }
@@ -65,6 +68,38 @@ function setSaveStatus(text, isWarning = false) {
 function readJsonStorage(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
 function getDoctorById(id) { return doctors.find((d) => d.id === id) || null; }
 function getDoctorNameById(id) { return getDoctorById(id)?.name || ""; }
+function getDoctorPrestazioni(id) { return getDoctorById(id)?.prestazioni || []; }
+function findDoctorPrestazione(doctorId, prestazioneName) {
+  const q = String(prestazioneName || "").trim().toLowerCase();
+  if (!q) return null;
+  return getDoctorPrestazioni(doctorId).find((item) => item.name.trim().toLowerCase() === q) || null;
+}
+function upsertDoctorPrestazione(doctorId, name, percMedico) {
+  const doctor = getDoctorById(doctorId); if (!doctor) return false;
+  const cleanName = String(name || "").trim();
+  const safePerc = Math.max(0, Math.min(100, Number(percMedico)));
+  if (!cleanName || !Number.isFinite(safePerc)) return false;
+  doctor.prestazioni = Array.isArray(doctor.prestazioni) ? doctor.prestazioni : [];
+  const existing = doctor.prestazioni.find((item) => item.name.toLowerCase() === cleanName.toLowerCase());
+  if (existing) { existing.name = cleanName; existing.percMedico = Number(safePerc.toFixed(2)); }
+  else doctor.prestazioni.push({ id: createId(), name: cleanName, percMedico: Number(safePerc.toFixed(2)) });
+  doctor.prestazioni.sort((a,b)=>a.name.localeCompare(b.name, "it"));
+  return true;
+}
+function deleteDoctorPrestazione(doctorId, name) {
+  const doctor = getDoctorById(doctorId); if (!doctor) return;
+  doctor.prestazioni = getDoctorPrestazioni(doctorId).filter((item) => item.name.toLowerCase() !== String(name || "").trim().toLowerCase());
+}
+function applyRegisteredPercentForPopup() {
+  const doctorId = Number(document.getElementById("popupDoctorSelect")?.value || 0);
+  const prestazione = String(document.getElementById("popupPrestazione")?.value || "").trim();
+  const cfg = findDoctorPrestazione(doctorId, prestazione);
+  if (!cfg) return false;
+  document.getElementById("popupPercMedico").value = cfg.percMedico;
+  document.getElementById("popupPercStruttura").value = Number((100 - cfg.percMedico).toFixed(2));
+  updatePopupPreview();
+  return true;
+}
 
 function normalizeDateISO(value, fallback = todayISO()) {
   if (typeof value !== "string") return fallback;
@@ -89,11 +124,22 @@ function normalizeYearISO(value, fallback = currentYearISO()) {
   return year > currentYearISO() ? fallback : year;
 }
 
+function sanitizePrestazioneConfig(raw) {
+  const name = String(raw?.name || raw?.prestazione || "").trim();
+  if (!name) return null;
+  const percMedico = Number(raw?.percMedico);
+  const safePerc = Number.isFinite(percMedico) ? Math.max(0, Math.min(100, percMedico)) : 60;
+  return { id: Number(raw?.id) || createId(), name, percMedico: Number(safePerc.toFixed(2)) };
+}
+
 function sanitizeDoctor(raw) {
   const name = String(raw?.name || "").trim();
   if (!name) return null;
   const availability = Array.isArray(raw?.availability) ? raw.availability.filter((item) => typeof item === "string") : [];
-  return { id: Number(raw?.id) || createId(), name, availability: [...new Set(availability)] };
+  const prestazioni = Array.isArray(raw?.prestazioni) ? raw.prestazioni.map(sanitizePrestazioneConfig).filter(Boolean) : [];
+  const dedup = new Map();
+  prestazioni.forEach((item) => { const key = item.name.toLowerCase(); if (!dedup.has(key)) dedup.set(key, item); });
+  return { id: Number(raw?.id) || createId(), name, availability: [...new Set(availability)], prestazioni: [...dedup.values()].sort((a,b)=>a.name.localeCompare(b.name, "it")) };
 }
 
 function sanitizeEntry(raw) {
@@ -182,6 +228,7 @@ function go(pageId, options = {}) {
     if (pageId === "homePage") renderHome();
     if (pageId === "mediciPage") renderDoctorsPage();
     if (pageId === "doctorDetailPage") renderDoctorDetail();
+    if (pageId === "prestazioniPage") renderPrestazioniPage();
     if (pageId === "reportPage") renderReport();
     if (pageId === "fatturePage") renderInvoices();
     if (pageId === "calendarPage") renderCalendar();
@@ -233,8 +280,9 @@ function getFrequentPrestazioni(doctorId, search = "") {
   const counts = new Map();
   entries.filter((entry) => !doctorId || entry.doctorId === doctorId).forEach((entry) => counts.set(entry.prestazione, (counts.get(entry.prestazione) || 0) + 1));
   const frequent = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "it")).map(([name]) => name);
-  const merged = [...new Set([...frequent, ...DEFAULT_PRESTAZIONI])];
-  return merged.filter((name) => !q || name.toLowerCase().includes(q)).slice(0, 12);
+  const configured = getDoctorPrestazioni(doctorId).map((item) => item.name);
+  const merged = [...new Set([...configured, ...frequent, ...DEFAULT_PRESTAZIONI])];
+  return merged.filter((name) => !q || name.toLowerCase().includes(q)).slice(0, 16);
 }
 
 function renderPrestazioneChips() {
@@ -247,6 +295,7 @@ function renderPrestazioneChips() {
   wrap.querySelectorAll("[data-chip]").forEach((btn) => btn.addEventListener("click", () => {
     document.getElementById("popupPrestazione").value = btn.dataset.chip;
     document.getElementById("popupPrestazioneSearch").value = "";
+    applyRegisteredPercentForPopup();
     renderPrestazioneChips();
   }));
 }
@@ -281,6 +330,7 @@ function openEntryPopup(entryId = null, forcedDoctorId = null, forcedDate = null
     document.getElementById("popupTipoVoce").value = "standard";
     document.getElementById("popupPagamento").value = "pos";
   }
+  applyRegisteredPercentForPopup();
   updatePopupPreview(); renderPrestazioneChips(); document.getElementById("popupPrestazioneSearch").focus();
 }
 function closeEntryPopup() { document.getElementById("popup").classList.add("hidden"); editingEntryId = null; }
@@ -306,6 +356,7 @@ function saveEntry() {
   if (!Number.isFinite(percMedico) || percMedico < 0 || percMedico > 100) return alert("Percentuale medico non valida");
   const safeImporto = Number(importo.toFixed(2)); const safePercMedico = Number(percMedico.toFixed(2));
   const quotaMedico = Number((safeImporto * safePercMedico / 100).toFixed(2)); const quotaStruttura = Number((safeImporto - quotaMedico).toFixed(2));
+  upsertDoctorPrestazione(doctorId, prestazione, safePercMedico);
   const payload = { doctorId, prestazione, data, importo: safeImporto, percMedico: safePercMedico, quotaMedico, quotaStruttura, tipoVoce, pagamento, transaThaw: false };
   if (editingEntryId) {
     const entry = entries.find((item) => item.id === editingEntryId); if (!entry) return;
@@ -419,6 +470,77 @@ function renderDoctorDetail() {
   saveUiState();
 }
 
+function renderPrestazioniPage() {
+  const doctorFilter = document.getElementById("prestazioniDoctorFilter");
+  if (!doctorFilter) return;
+  if (!doctors.length) {
+    doctorFilter.innerHTML = '<option value="">Nessun medico</option>';
+    document.getElementById("prestazioniList").innerHTML = `<div class="medico-card">Inserisci prima almeno un medico.</div>`;
+    return;
+  }
+  if (!doctorFilter.value || !doctors.some((doctor) => String(doctor.id) === doctorFilter.value)) doctorFilter.value = String(currentDoctorId || doctors[0].id);
+  const doctorId = Number(doctorFilter.value);
+  currentDoctorId = doctorId || currentDoctorId;
+  doctorFilter.innerHTML = doctors.map((doctor) => `<option value="${doctor.id}" ${doctor.id === doctorId ? "selected" : ""}>${escapeHtml(doctor.name)}</option>`).join("");
+  const list = getDoctorPrestazioni(doctorId);
+  document.getElementById("prestazioniList").innerHTML = list.length ? list.map((item) => `
+    <div class="prestazione-row">
+      <div class="prestazione-row-top">
+        <div>
+          <div class="prestazione-row-name">${escapeHtml(item.name)}</div>
+          <div class="prestazione-row-sub">% medico automatica: ${item.percMedico}%</div>
+        </div>
+        <div class="simple-medico-actions">
+          <button class="icon-btn" type="button" data-edit-prestazione="${escapeHtml(item.name)}">✏️</button>
+          <button class="icon-btn" type="button" data-delete-prestazione="${escapeHtml(item.name)}">🗑️</button>
+        </div>
+      </div>
+    </div>`).join("") : `<div class="medico-card">Nessuna prestazione salvata per questo medico.</div>`;
+  document.querySelectorAll("[data-edit-prestazione]").forEach((btn) => btn.addEventListener("click", () => editPrestazioneConfig(doctorId, btn.dataset.editPrestazione)));
+  document.querySelectorAll("[data-delete-prestazione]").forEach((btn) => btn.addEventListener("click", () => removePrestazioneConfig(doctorId, btn.dataset.deletePrestazione)));
+}
+
+function addPrestazioneConfig() {
+  if (!doctors.length) return alert("Inserisci prima almeno un medico");
+  const doctorId = Number(document.getElementById("prestazioniDoctorFilter")?.value || currentDoctorId || doctors[0].id);
+  const name = prompt("Nome prestazione");
+  if (!name) return;
+  const cleanName = name.trim();
+  if (!cleanName) return;
+  const suggested = findDoctorPrestazione(doctorId, cleanName)?.percMedico ?? 60;
+  const perc = prompt(`Percentuale medico per "${cleanName}"`, String(suggested));
+  if (perc === null) return;
+  const safePerc = Number(perc);
+  if (!Number.isFinite(safePerc) || safePerc < 0 || safePerc > 100) return alert("Inserisci una percentuale valida tra 0 e 100");
+  upsertDoctorPrestazione(doctorId, cleanName, safePerc);
+  saveAll();
+  renderPrestazioniPage();
+}
+
+function editPrestazioneConfig(doctorId, oldName) {
+  const current = findDoctorPrestazione(doctorId, oldName);
+  if (!current) return;
+  const name = prompt("Modifica nome prestazione", current.name);
+  if (!name) return;
+  const cleanName = name.trim();
+  if (!cleanName) return;
+  const perc = prompt(`Percentuale medico per "${cleanName}"`, String(current.percMedico));
+  if (perc === null) return;
+  const safePerc = Number(perc);
+  if (!Number.isFinite(safePerc) || safePerc < 0 || safePerc > 100) return alert("Inserisci una percentuale valida tra 0 e 100");
+  deleteDoctorPrestazione(doctorId, oldName);
+  upsertDoctorPrestazione(doctorId, cleanName, safePerc);
+  saveAll();
+  renderPrestazioniPage();
+}
+
+function removePrestazioneConfig(doctorId, name) {
+  if (!confirm(`Eliminare la prestazione "${name}" da questo medico?`)) return;
+  deleteDoctorPrestazione(doctorId, name);
+  saveAll();
+  renderPrestazioniPage();
+}
+
 function printDoctorDetail() { window.print(); }
 
 function buildPieSVG(items) {
@@ -503,7 +625,7 @@ function renderCalendar() {
   saveUiState();
 }
 
-function renderAll() { renderTopMonthlyCards(); renderHome(); renderDoctorsPage(); renderReport(); renderInvoices(); if (currentDoctorId) renderDoctorDetail(); if (document.getElementById("calendarPage").classList.contains("active")) renderCalendar(); }
+function renderAll() { renderTopMonthlyCards(); renderHome(); renderDoctorsPage(); renderPrestazioniPage(); renderReport(); renderInvoices(); if (currentDoctorId) renderDoctorDetail(); if (document.getElementById("calendarPage").classList.contains("active")) renderCalendar(); }
 
 function exportData() {
   const data = { schemaVersion: 4, doctors, entries, invoiceStates, exportedAt: new Date().toISOString() };
@@ -534,6 +656,8 @@ function setupEventListeners() {
   document.getElementById("backToHomeBtn").addEventListener("click", () => go("homePage"));
   document.getElementById("quickAddDoctorBtn").addEventListener("click", () => { if (!currentDoctorId) return; const month = document.getElementById("doctorDetailMonth").value || currentMonthISO(); openEntryPopup(null, currentDoctorId, month === currentMonthISO() ? todayISO() : `${month}-01`); });
   document.getElementById("printDoctorBtn").addEventListener("click", printDoctorDetail);
+  document.getElementById("addPrestazioneBtn").addEventListener("click", addPrestazioneConfig);
+  document.getElementById("prestazioniDoctorFilter").addEventListener("change", (event) => { currentDoctorId = Number(event.target.value) || currentDoctorId; renderPrestazioniPage(); saveUiState(); });
   document.getElementById("printReportBtn").addEventListener("click", printReport);
   document.getElementById("printInvoicesBtn").addEventListener("click", printInvoices);
   document.getElementById("exportBackupBtn").addEventListener("click", exportData);
@@ -548,8 +672,10 @@ function setupEventListeners() {
   document.getElementById("closePopupBtn").addEventListener("click", closeEntryPopup);
   document.getElementById("cancelPopupBtn").addEventListener("click", closeEntryPopup);
   document.getElementById("savePopupBtn").addEventListener("click", saveEntry);
-  document.getElementById("popupDoctorSelect").addEventListener("change", renderPrestazioneChips);
+  document.getElementById("popupDoctorSelect").addEventListener("change", () => { renderPrestazioneChips(); applyRegisteredPercentForPopup(); });
   document.getElementById("popupPrestazioneSearch").addEventListener("input", renderPrestazioneChips);
+  document.getElementById("popupPrestazione").addEventListener("change", applyRegisteredPercentForPopup);
+  document.getElementById("popupPrestazione").addEventListener("blur", applyRegisteredPercentForPopup);
   document.getElementById("popupPercMedico").addEventListener("input", (event) => { let value = Math.max(0, Math.min(100, parseFloat(event.target.value) || 0)); event.target.value = value; document.getElementById("popupPercStruttura").value = 100 - value; updatePopupPreview(); });
   document.getElementById("popupPercStruttura").addEventListener("input", (event) => { let value = Math.max(0, Math.min(100, parseFloat(event.target.value) || 0)); event.target.value = value; document.getElementById("popupPercMedico").value = 100 - value; updatePopupPreview(); });
   document.getElementById("popupImporto").addEventListener("input", updatePopupPreview);
@@ -559,8 +685,33 @@ function setupEventListeners() {
   document.getElementById("fattureStatusFilter").addEventListener("change", renderInvoices);
   document.getElementById("fattureTypeFilter").addEventListener("change", renderInvoices);
   document.getElementById("calendarMonth").addEventListener("change", renderCalendar);
+  document.getElementById("pinUnlockBtn").addEventListener("click", unlockWithPin);
+  document.getElementById("pinInput").addEventListener("keydown", (event) => { if (event.key === "Enter") unlockWithPin(); });
   document.getElementById("popup").addEventListener("click", (event) => { if (event.target.id === "popup") closeEntryPopup(); });
   document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !document.getElementById("popup").classList.contains("hidden")) closeEntryPopup(); });
+}
+
+function lockApp() {
+  isUnlocked = false;
+  document.getElementById("pinOverlay")?.classList.remove("hidden");
+  document.getElementById("pinError")?.classList.add("hidden");
+  const input = document.getElementById("pinInput");
+  if (input) { input.value = ""; setTimeout(() => input.focus(), 40); }
+}
+
+function unlockWithPin() {
+  const input = document.getElementById("pinInput");
+  const error = document.getElementById("pinError");
+  if (!input) return;
+  if (input.value === ACCESS_PIN) {
+    isUnlocked = true;
+    document.getElementById("pinOverlay")?.classList.add("hidden");
+    error?.classList.add("hidden");
+    input.value = "";
+    return;
+  }
+  error?.classList.remove("hidden");
+  input.select();
 }
 
 function boot() {
@@ -572,8 +723,13 @@ function boot() {
   document.getElementById("fattureDateTo").max = todayISO();
   document.getElementById("calendarMonth").value = currentMonthISO();
   setupEventListeners(); loadUiState(); renderHomeFilterControl(); renderReportFilterControl(); renderAll();
-  const allowedPages = ["homePage", "mediciPage", "doctorDetailPage", "reportPage", "fatturePage", "calendarPage"]; if (!allowedPages.includes(currentPage)) currentPage = "homePage"; if (currentPage === "doctorDetailPage" && !currentDoctorId) currentPage = "mediciPage";
+  const allowedPages = ["homePage", "mediciPage", "doctorDetailPage", "prestazioniPage", "reportPage", "fatturePage", "calendarPage"]; if (!allowedPages.includes(currentPage)) currentPage = "homePage"; if (currentPage === "doctorDetailPage" && !currentDoctorId) currentPage = "mediciPage";
   setActiveTab("home", homeFilterType); setActiveTab("report", reportFilterType); go(currentPage, { skipRender: false }); setSaveStatus("Archivio locale premium attivo");
+  lockApp();
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { lastHiddenAt = Date.now(); return; }
+    if (isUnlocked && lastHiddenAt && Date.now() - lastHiddenAt > 5000) lockApp();
+  });
 }
 
 document.addEventListener("DOMContentLoaded", boot);
