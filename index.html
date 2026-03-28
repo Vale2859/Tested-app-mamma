@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>ANVAMED Pro</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">ANVAMED</div>
+      <div class="login-sub">Accesso gestionale</div>
+      <input id="pinInput" type="password" inputmode="numeric" placeholder="Inserisci PIN" maxlength="10" />
+      <button class="primary-btn" id="loginBtn" type="button">Entra</button>
+      <div class="login-note">PIN: 1003</div>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="brand">ANVAMED</div>
+        <div class="brand-sub">Pro Manager</div>
+      </div>
+      <button class="ghost-btn small" id="logoutBtn" type="button">Esci</button>
+    </header>
+
+    <main class="content">
+      <section id="page-home" class="page active">
+        <div class="stats-grid">
+          <article class="stat-card">
+            <div class="stat-label">Totale</div>
+            <div class="stat-value" id="homeTotal">€0,00</div>
+          </article>
+          <article class="stat-card success">
+            <div class="stat-label">Struttura</div>
+            <div class="stat-value" id="homeStructure">€0,00</div>
+          </article>
+          <article class="stat-card accent">
+            <div class="stat-label">Medici</div>
+            <div class="stat-value" id="homeDoctors">€0,00</div>
+          </article>
+        </div>
+
+        <div class="hero-actions">
+          <button class="primary-btn large" id="openEntryBtn" type="button">+ Nuova registrazione</button>
+        </div>
+
+        <div class="card filters-card">
+          <div class="segmented" id="homeModeTabs">
+            <button class="seg active" data-mode="day" type="button">Giorno</button>
+            <button class="seg" data-mode="month" type="button">Mese</button>
+            <button class="seg" data-mode="year" type="button">Anno</button>
+          </div>
+          <div id="homeFilterArea"></div>
+        </div>
+
+        <div class="section-title-row">
+          <h2>Registrazioni</h2>
+          <span class="section-sub" id="homeFilterLabel">Oggi</span>
+        </div>
+        <div id="homeEntries" class="list"></div>
+      </section>
+
+      <section id="page-medici" class="page">
+        <div class="section-title-row">
+          <h2>Medici</h2>
+          <button class="primary-btn small" id="addDoctorBtn" type="button">+ Aggiungi</button>
+        </div>
+
+        <div class="toolbar-grid">
+          <button class="ghost-btn" id="backupBtn" type="button">💾 Backup</button>
+          <label class="ghost-btn file-label">
+            📂 Importa
+            <input id="importFile" type="file" accept="application/json,.json" hidden />
+          </label>
+        </div>
+
+        <div id="doctorsList" class="list"></div>
+      </section>
+
+      <section id="page-prestazioni" class="page">
+        <div class="section-title-row">
+          <h2>Prestazioni</h2>
+          <span class="section-sub">Medico per medico</span>
+        </div>
+
+        <div class="card manage-card">
+          <label class="field-label" for="prestDoctorSelect">Medico</label>
+          <select id="prestDoctorSelect"></select>
+        </div>
+
+        <div class="card manage-card two-col">
+          <div>
+            <label class="field-label" for="newPrestName">Prestazione</label>
+            <input id="newPrestName" type="text" placeholder="Es. Visita" />
+          </div>
+          <div>
+            <label class="field-label" for="newPrestPerc">% medico</label>
+            <input id="newPrestPerc" type="number" min="0" max="100" value="60" />
+          </div>
+        </div>
+
+        <button class="primary-btn" id="addPrestBtn" type="button">Aggiungi prestazione</button>
+        <div id="prestazioniList" class="list"></div>
+      </section>
+
+      <section id="page-report" class="page">
+        <div class="section-title-row">
+          <h2>Report</h2>
+          <span class="section-sub">Riepilogo</span>
+        </div>
+
+        <div class="card filters-card">
+          <div class="segmented" id="reportModeTabs">
+            <button class="seg active" data-mode="day" type="button">Giorno</button>
+            <button class="seg" data-mode="month" type="button">Mese</button>
+            <button class="seg" data-mode="year" type="button">Anno</button>
+          </div>
+          <div id="reportFilterArea"></div>
+        </div>
+
+        <div class="stats-grid report-mini">
+          <article class="stat-card mini"><div class="stat-label">POS</div><div class="stat-value" id="reportPos">€0,00</div></article>
+          <article class="stat-card mini"><div class="stat-label">Contanti</div><div class="stat-value" id="reportCash">€0,00</div></article>
+          <article class="stat-card mini"><div class="stat-label">Standard</div><div class="stat-value" id="reportStd">€0,00</div></article>
+          <article class="stat-card mini"><div class="stat-label">Riservata</div><div class="stat-value" id="reportRis">€0,00</div></article>
+        </div>
+
+        <div class="card chart-card">
+          <canvas id="reportChart"></canvas>
+        </div>
+
+        <div class="section-title-row">
+          <h2>Per medico</h2>
+        </div>
+        <div id="reportDoctorList" class="list"></div>
+      </section>
+
+      <section id="page-fatture" class="page">
+        <div class="section-title-row">
+          <h2>Fatture</h2>
+          <div class="inline-actions">
+            <button class="ghost-btn small" id="openPdfBtn" type="button">PDF</button>
+            <button class="ghost-btn small" id="goBackBtn" type="button">Indietro</button>
+          </div>
+        </div>
+
+        <div class="card filters-card stacked-gap">
+          <div class="two-col compact">
+            <div>
+              <label class="field-label" for="invoiceDoctorFilter">Medico</label>
+              <select id="invoiceDoctorFilter"></select>
+            </div>
+            <div>
+              <label class="field-label" for="invoiceDateFilter">Data</label>
+              <input id="invoiceDateFilter" type="date" />
+            </div>
+          </div>
+          <div class="two-col compact">
+            <div>
+              <label class="field-label" for="invoiceAmountFilter">Importo</label>
+              <input id="invoiceAmountFilter" type="number" step="0.01" placeholder="Es. 100" />
+            </div>
+            <div>
+              <label class="field-label" for="invoiceStatusFilter">Stato</label>
+              <select id="invoiceStatusFilter">
+                <option value="">Tutti</option>
+                <option value="da_fatturare">Da fatturare</option>
+                <option value="fatturato">Fatturato</option>
+                <option value="pagato">Pagato</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="invoiceList" class="list"></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-page="home" type="button">Home</button>
+      <button class="nav-btn" data-page="medici" type="button">Medici</button>
+      <button class="nav-btn" data-page="prestazioni" type="button">Prestazioni</button>
+      <button class="nav-btn" data-page="report" type="button">Report</button>
+      <button class="nav-btn" data-page="fatture" type="button">Fatture</button>
+    </nav>
+  </div>
+
+  <div id="entryModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Nuova registrazione</h3>
+        <button class="icon-close" id="closeEntryBtn" type="button">✕</button>
+      </div>
+
+      <label class="field-label" for="entryDoctor">Medico</label>
+      <select id="entryDoctor"></select>
+
+      <label class="field-label" for="entryPrestazione">Prestazione</label>
+      <input id="entryPrestazione" type="text" placeholder="Scrivi o tocca una prestazione" />
+      <div id="entryPrestazioniChips" class="chips"></div>
+
+      <label class="field-label" for="entryDate">Data</label>
+      <input id="entryDate" type="date" />
+
+      <div class="amount-method-row">
+        <div>
+          <label class="field-label" for="entryImporto">Importo</label>
+          <input id="entryImporto" type="number" step="0.01" placeholder="€" />
+        </div>
+        <div>
+          <label class="field-label">Metodo</label>
+          <div class="choice-grid" id="metodoChoices">
+            <button class="choice active" data-value="pos" type="button">POS</button>
+            <button class="choice" data-value="contanti" type="button">Contanti</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="amount-method-row">
+        <div>
+          <label class="field-label" for="entryPerc">% medico</label>
+          <input id="entryPerc" type="number" min="0" max="100" value="60" />
+        </div>
+        <div>
+          <label class="field-label">Tipo</label>
+          <div class="choice-grid" id="tipoChoices">
+            <button class="choice active" data-value="standard" type="button">Standard</button>
+            <button class="choice dark" data-value="riservata" type="button">Riservata</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-row"><span>Quota medico</span><strong id="entryPrevDoctor">€0,00</strong></div>
+        <div class="summary-row"><span>Quota struttura</span><strong id="entryPrevStructure">€0,00</strong></div>
+      </div>
+
+      <button class="primary-btn" id="saveEntryBtn" type="button">Salva registrazione</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden">Salvato</div>
+
+  <script src="app.js"></script>
+</body>
+</html>
