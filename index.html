@@ -3,247 +3,303 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>ANVAMED Pro</title>
+  <title>ANVAMED Manager</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+  <!-- LOGIN -->
   <div id="loginScreen" class="login-screen">
     <div class="login-card">
       <div class="login-logo">ANVAMED</div>
-      <div class="login-sub">Accesso gestionale</div>
-      <input id="pinInput" type="password" inputmode="numeric" placeholder="Inserisci PIN" maxlength="10" />
-      <button class="primary-btn" id="loginBtn" type="button">Entra</button>
-      <div class="login-note">PIN: 1003</div>
+      <div class="login-sub">Manager</div>
+      <input id="pinInput" class="input" type="password" placeholder="Inserisci PIN" inputmode="numeric" />
+      <button class="btn btn-primary" id="loginBtn" type="button">Entra</button>
     </div>
   </div>
 
   <div class="app-shell">
+    <!-- HEADER -->
     <header class="topbar">
       <div>
-        <div class="brand">ANVAMED</div>
+        <h1 class="brand-title">ANVAMED</h1>
         <div class="brand-sub">Pro Manager</div>
       </div>
-      <button class="ghost-btn small" id="logoutBtn" type="button">Esci</button>
+      <button class="btn btn-light btn-exit" id="logoutBtn" type="button">Esci</button>
     </header>
 
-    <main class="content">
-      <section id="page-home" class="page active">
-        <div class="stats-grid">
+    <!-- MAIN -->
+    <main class="main-wrap">
+      <!-- HOME -->
+      <section id="page-home" class="page is-active">
+        <div class="stats-grid stats-grid-3">
           <article class="stat-card">
-            <div class="stat-label">Totale</div>
-            <div class="stat-value" id="homeTotal">€0,00</div>
+            <div class="stat-label">Mese in corso</div>
+            <div class="stat-value" id="monthTotalValue">€0,00</div>
           </article>
-          <article class="stat-card success">
-            <div class="stat-label">Struttura</div>
-            <div class="stat-value" id="homeStructure">€0,00</div>
+          <article class="stat-card stat-card-green">
+            <div class="stat-label">Totale struttura</div>
+            <div class="stat-value" id="monthStructureValue">€0,00</div>
           </article>
-          <article class="stat-card accent">
-            <div class="stat-label">Medici</div>
-            <div class="stat-value" id="homeDoctors">€0,00</div>
+          <article class="stat-card stat-card-purple">
+            <div class="stat-label">Totale medici</div>
+            <div class="stat-value" id="monthDoctorsValue">€0,00</div>
           </article>
         </div>
 
-        <div class="hero-actions">
-          <button class="primary-btn large" id="openEntryBtn" type="button">+ Nuova registrazione</button>
-        </div>
-
-        <div class="card filters-card">
-          <div class="segmented" id="homeModeTabs">
-            <button class="seg active" data-mode="day" type="button">Giorno</button>
-            <button class="seg" data-mode="month" type="button">Mese</button>
-            <button class="seg" data-mode="year" type="button">Anno</button>
+        <button class="hero-action" id="openNewEntryBtn" type="button">
+          <div class="hero-action-plus">+</div>
+          <div class="hero-action-texts">
+            <div class="hero-action-title">NUOVA REGISTRAZIONE</div>
+            <div class="hero-action-sub">Giorno corrente o giorni passati</div>
           </div>
-          <div id="homeFilterArea"></div>
+        </button>
+
+        <div class="segment-wrap">
+          <button class="segment is-active" data-home-mode="day" type="button">Giorno</button>
+          <button class="segment" data-home-mode="month" type="button">Mese</button>
+          <button class="segment" data-home-mode="year" type="button">Anno</button>
         </div>
 
-        <div class="section-title-row">
-          <h2>Registrazioni</h2>
-          <span class="section-sub" id="homeFilterLabel">Oggi</span>
+        <button class="calendar-bar" id="openCalendarBtn" type="button">📅 Calendario</button>
+
+        <div class="filter-card">
+          <div class="filter-title" id="homeFilterTitle">Giorno selezionato</div>
+          <div id="homeFilterBox"></div>
         </div>
-        <div id="homeEntries" class="list"></div>
+
+        <div class="section-head">
+          <h2>Registrazioni</h2>
+          <span id="homePeriodBadge" class="section-badge">oggi</span>
+        </div>
+
+        <div id="homeEntriesList" class="stack-list"></div>
       </section>
 
-      <section id="page-medici" class="page">
-        <div class="section-title-row">
+      <!-- MEDICI -->
+      <section id="page-doctors" class="page">
+        <div class="section-head section-head-space">
           <h2>Medici</h2>
-          <button class="primary-btn small" id="addDoctorBtn" type="button">+ Aggiungi</button>
+          <button class="btn btn-gradient" id="addDoctorBtn" type="button">+ Aggiungi</button>
         </div>
 
-        <div class="toolbar-grid">
-          <button class="ghost-btn" id="backupBtn" type="button">💾 Backup</button>
-          <label class="ghost-btn file-label">
+        <div class="inline-tools">
+          <button class="btn btn-light" id="exportBtn" type="button">💾 Backup</button>
+          <label class="btn btn-light file-label">
             📂 Importa
-            <input id="importFile" type="file" accept="application/json,.json" hidden />
+            <input id="importFile" type="file" accept=".json" hidden />
           </label>
         </div>
 
-        <div id="doctorsList" class="list"></div>
+        <div id="doctorCardsList" class="stack-list"></div>
       </section>
 
-      <section id="page-prestazioni" class="page">
-        <div class="section-title-row">
+      <!-- PRESTAZIONI -->
+      <section id="page-services" class="page">
+        <div class="section-head">
           <h2>Prestazioni</h2>
-          <span class="section-sub">Medico per medico</span>
+          <span class="section-badge">Medico per medico</span>
         </div>
 
-        <div class="card manage-card">
-          <label class="field-label" for="prestDoctorSelect">Medico</label>
-          <select id="prestDoctorSelect"></select>
+        <div class="panel">
+          <label class="field-label" for="servicesDoctorSelect">Medico</label>
+          <select id="servicesDoctorSelect" class="input"></select>
         </div>
 
-        <div class="card manage-card two-col">
+        <div class="panel two-cols">
           <div>
-            <label class="field-label" for="newPrestName">Prestazione</label>
-            <input id="newPrestName" type="text" placeholder="Es. Visita" />
+            <label class="field-label" for="newServiceName">Prestazione</label>
+            <input id="newServiceName" class="input" type="text" placeholder="Es. Visita" />
           </div>
           <div>
-            <label class="field-label" for="newPrestPerc">% medico</label>
-            <input id="newPrestPerc" type="number" min="0" max="100" value="60" />
+            <label class="field-label" for="newServicePerc">% medico</label>
+            <input id="newServicePerc" class="input" type="number" min="0" max="100" value="60" />
           </div>
         </div>
 
-        <button class="primary-btn" id="addPrestBtn" type="button">Aggiungi prestazione</button>
-        <div id="prestazioniList" class="list"></div>
+        <button class="btn btn-gradient" id="addServiceBtn" type="button">Aggiungi prestazione</button>
+
+        <div id="servicesList" class="stack-list"></div>
       </section>
 
+      <!-- REPORT -->
       <section id="page-report" class="page">
-        <div class="section-title-row">
+        <div class="section-head">
           <h2>Report</h2>
-          <span class="section-sub">Riepilogo</span>
+          <span class="section-badge">Riepilogo</span>
         </div>
 
-        <div class="card filters-card">
-          <div class="segmented" id="reportModeTabs">
-            <button class="seg active" data-mode="day" type="button">Giorno</button>
-            <button class="seg" data-mode="month" type="button">Mese</button>
-            <button class="seg" data-mode="year" type="button">Anno</button>
-          </div>
-          <div id="reportFilterArea"></div>
+        <div class="segment-wrap">
+          <button class="segment is-active" data-report-mode="day" type="button">Giorno</button>
+          <button class="segment" data-report-mode="month" type="button">Mese</button>
+          <button class="segment" data-report-mode="year" type="button">Anno</button>
         </div>
 
-        <div class="stats-grid report-mini">
-          <article class="stat-card mini"><div class="stat-label">POS</div><div class="stat-value" id="reportPos">€0,00</div></article>
-          <article class="stat-card mini"><div class="stat-label">Contanti</div><div class="stat-value" id="reportCash">€0,00</div></article>
-          <article class="stat-card mini"><div class="stat-label">Standard</div><div class="stat-value" id="reportStd">€0,00</div></article>
-          <article class="stat-card mini"><div class="stat-label">Riservata</div><div class="stat-value" id="reportRis">€0,00</div></article>
+        <div class="filter-card">
+          <div class="filter-title" id="reportFilterTitle">Giorno selezionato</div>
+          <div id="reportFilterBox"></div>
         </div>
 
-        <div class="card chart-card">
+        <div class="stats-grid stats-grid-2">
+          <article class="stat-card">
+            <div class="stat-label">POS</div>
+            <div class="stat-value" id="reportPosValue">€0,00</div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-label">Contanti</div>
+            <div class="stat-value" id="reportCashValue">€0,00</div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-label">Standard</div>
+            <div class="stat-value" id="reportStandardValue">€0,00</div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-label">Riservata</div>
+            <div class="stat-value" id="reportReservedValue">€0,00</div>
+          </article>
+        </div>
+
+        <div class="chart-card">
           <canvas id="reportChart"></canvas>
         </div>
-
-        <div class="section-title-row">
-          <h2>Per medico</h2>
-        </div>
-        <div id="reportDoctorList" class="list"></div>
       </section>
 
-      <section id="page-fatture" class="page">
-        <div class="section-title-row">
+      <!-- FATTURE -->
+      <section id="page-invoices" class="page">
+        <div class="section-head section-head-space">
           <h2>Fatture</h2>
-          <div class="inline-actions">
-            <button class="ghost-btn small" id="openPdfBtn" type="button">PDF</button>
-            <button class="ghost-btn small" id="goBackBtn" type="button">Indietro</button>
+          <div class="inline-tools">
+            <button class="btn btn-light" id="printPdfBtn" type="button">PDF</button>
+            <button class="btn btn-light" id="goBackBtn" type="button">Indietro</button>
           </div>
         </div>
 
-        <div class="card filters-card stacked-gap">
-          <div class="two-col compact">
-            <div>
-              <label class="field-label" for="invoiceDoctorFilter">Medico</label>
-              <select id="invoiceDoctorFilter"></select>
-            </div>
-            <div>
-              <label class="field-label" for="invoiceDateFilter">Data</label>
-              <input id="invoiceDateFilter" type="date" />
-            </div>
+        <div class="panel invoice-filters">
+          <div>
+            <label class="field-label" for="invoiceDoctorFilter">Medico</label>
+            <select id="invoiceDoctorFilter" class="input"></select>
           </div>
-          <div class="two-col compact">
-            <div>
-              <label class="field-label" for="invoiceAmountFilter">Importo</label>
-              <input id="invoiceAmountFilter" type="number" step="0.01" placeholder="Es. 100" />
-            </div>
-            <div>
-              <label class="field-label" for="invoiceStatusFilter">Stato</label>
-              <select id="invoiceStatusFilter">
-                <option value="">Tutti</option>
-                <option value="da_fatturare">Da fatturare</option>
-                <option value="fatturato">Fatturato</option>
-                <option value="pagato">Pagato</option>
-              </select>
-            </div>
+          <div>
+            <label class="field-label" for="invoiceDateFilter">Data</label>
+            <input id="invoiceDateFilter" class="input" type="date" />
+          </div>
+          <div>
+            <label class="field-label" for="invoiceAmountFilter">Importo</label>
+            <input id="invoiceAmountFilter" class="input" type="number" placeholder="Es. 100" />
+          </div>
+          <div>
+            <label class="field-label" for="invoiceStateFilter">Stato</label>
+            <select id="invoiceStateFilter" class="input">
+              <option value="">Tutti</option>
+              <option value="da_fatturare">Da fatturare</option>
+              <option value="fatturato">Fatturato</option>
+              <option value="pagato">Pagato</option>
+            </select>
           </div>
         </div>
 
-        <div id="invoiceList" class="list"></div>
+        <div id="invoiceList" class="stack-list"></div>
       </section>
     </main>
 
+    <!-- BOTTOM NAV -->
     <nav class="bottom-nav">
-      <button class="nav-btn active" data-page="home" type="button">Home</button>
-      <button class="nav-btn" data-page="medici" type="button">Medici</button>
-      <button class="nav-btn" data-page="prestazioni" type="button">Prestazioni</button>
+      <button class="nav-btn is-active" data-page="home" type="button">Home</button>
+      <button class="nav-btn" data-page="doctors" type="button">Medici</button>
+      <button class="nav-btn" data-page="services" type="button">Prestazioni</button>
       <button class="nav-btn" data-page="report" type="button">Report</button>
-      <button class="nav-btn" data-page="fatture" type="button">Fatture</button>
+      <button class="nav-btn" data-page="invoices" type="button">Fatture</button>
     </nav>
   </div>
 
+  <!-- MODAL NUOVA REGISTRAZIONE -->
   <div id="entryModal" class="modal hidden">
     <div class="modal-card">
       <div class="modal-head">
         <h3>Nuova registrazione</h3>
-        <button class="icon-close" id="closeEntryBtn" type="button">✕</button>
+        <button class="icon-btn" id="closeEntryModalBtn" type="button">✕</button>
       </div>
 
-      <label class="field-label" for="entryDoctor">Medico</label>
-      <select id="entryDoctor"></select>
+      <label class="field-label" for="entryDoctorSelect">Medico</label>
+      <select id="entryDoctorSelect" class="input"></select>
 
-      <label class="field-label" for="entryPrestazione">Prestazione</label>
-      <input id="entryPrestazione" type="text" placeholder="Scrivi o tocca una prestazione" />
-      <div id="entryPrestazioniChips" class="chips"></div>
+      <div class="service-search-wrap">
+        <input id="entryServiceInput" class="input service-input" type="text" placeholder="Scrivi o cerca prestazione" />
+        <button class="search-toggle-btn" id="toggleServicePickerBtn" type="button">🔍</button>
+      </div>
 
-      <label class="field-label" for="entryDate">Data</label>
-      <input id="entryDate" type="date" />
+      <div id="servicePickerPanel" class="service-picker hidden">
+        <input id="serviceSearchInput" class="input service-search-mini" type="text" placeholder="Cerca una prestazione" />
 
-      <div class="amount-method-row">
-        <div>
-          <label class="field-label" for="entryImporto">Importo</label>
-          <input id="entryImporto" type="number" step="0.01" placeholder="€" />
+        <div class="picker-block">
+          <div class="picker-title">Più usate con questo medico</div>
+          <div id="commonServicesRow" class="pill-row"></div>
         </div>
+
+        <div class="picker-block">
+          <div class="picker-title">Tutte le altre</div>
+          <div id="allServicesRow" class="pill-row"></div>
+        </div>
+      </div>
+
+      <label class="field-label" for="entryDateInput">Data</label>
+      <input id="entryDateInput" class="input" type="date" />
+
+      <div class="entry-money-row">
+        <div class="entry-money-left">
+          <label class="field-label" for="entryAmountInput">Importo</label>
+          <input id="entryAmountInput" class="input" type="number" placeholder="€" />
+        </div>
+
+        <div class="entry-methods">
+          <button class="method-btn is-active" data-method="pos" type="button">POS</button>
+          <button class="method-btn" data-method="contanti" type="button">Contanti</button>
+        </div>
+      </div>
+
+      <div class="entry-bottom-grid">
         <div>
-          <label class="field-label">Metodo</label>
-          <div class="choice-grid" id="metodoChoices">
-            <button class="choice active" data-value="pos" type="button">POS</button>
-            <button class="choice" data-value="contanti" type="button">Contanti</button>
+          <label class="field-label" for="entryPercInput">% medico</label>
+          <input id="entryPercInput" class="input" type="number" min="0" max="100" value="60" />
+        </div>
+
+        <div>
+          <label class="field-label">Tipo voce</label>
+          <div class="type-toggle">
+            <button class="type-btn is-active" data-type="standard" type="button">Standard</button>
+            <button class="type-btn" data-type="riservata" type="button">Riservata</button>
           </div>
         </div>
       </div>
 
-      <div class="amount-method-row">
-        <div>
-          <label class="field-label" for="entryPerc">% medico</label>
-          <input id="entryPerc" type="number" min="0" max="100" value="60" />
+      <div class="summary-grid">
+        <div class="summary-box">
+          <div class="summary-label">Quota medico</div>
+          <div class="summary-value" id="entryDoctorQuotaPreview">€0,00</div>
         </div>
-        <div>
-          <label class="field-label">Tipo</label>
-          <div class="choice-grid" id="tipoChoices">
-            <button class="choice active" data-value="standard" type="button">Standard</button>
-            <button class="choice dark" data-value="riservata" type="button">Riservata</button>
-          </div>
+        <div class="summary-box">
+          <div class="summary-label">Quota struttura</div>
+          <div class="summary-value" id="entryStructureQuotaPreview">€0,00</div>
         </div>
       </div>
 
-      <div class="summary-box">
-        <div class="summary-row"><span>Quota medico</span><strong id="entryPrevDoctor">€0,00</strong></div>
-        <div class="summary-row"><span>Quota struttura</span><strong id="entryPrevStructure">€0,00</strong></div>
+      <div class="modal-actions">
+        <button class="btn btn-light" id="cancelEntryBtn" type="button">Chiudi</button>
+        <button class="btn btn-gradient" id="saveEntryBtn" type="button">Salva registrazione</button>
       </div>
-
-      <button class="primary-btn" id="saveEntryBtn" type="button">Salva registrazione</button>
     </div>
   </div>
 
-  <div id="toast" class="toast hidden">Salvato</div>
+  <!-- MODAL CALENDARIO -->
+  <div id="calendarModal" class="modal hidden">
+    <div class="modal-card modal-card-sm">
+      <div class="modal-head">
+        <h3>Calendario</h3>
+        <button class="icon-btn" id="closeCalendarModalBtn" type="button">✕</button>
+      </div>
+      <div id="calendarModalBody"></div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
