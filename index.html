@@ -4,177 +4,260 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ANVAMED Manager</title>
-
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
+  <div class="app-shell">
+    <header class="header">
+      <div class="brand-title">ANVAMED</div>
+      <div class="brand-subtitle">MANAGER</div>
+      <div id="saveStatus" class="save-status">Archivio locale attivo</div>
+    </header>
 
-<!-- LOGIN -->
-<div id="loginScreen" class="login-screen">
-  <div class="login-card">
-    <div class="login-logo">ANVAMED</div>
-    <div class="login-subtitle">MANAGER</div>
-
-    <input id="pinInput" type="password" placeholder="Inserisci PIN">
-    <button id="loginBtn" class="primary-btn">Entra</button>
-  </div>
-</div>
-
-<div class="app-shell">
-
-  <!-- HEADER -->
-  <header class="header">
-    <div class="brand-title">ANVAMED</div>
-    <div class="brand-subtitle">MANAGER</div>
-    <button id="logoutBtn" class="logout-btn">Esci</button>
-  </header>
-
-  <main class="main-content">
-
-    <!-- HOME -->
-    <section id="page-home" class="page is-active">
-
-      <div class="top-cards">
-        <div class="stat-card">
-          <p>Mese</p>
-          <h2 id="monthTotalValue">€0</h2>
+    <main class="main-content">
+      <section id="homePage" class="page active">
+        <div class="top-cards">
+          <div class="card stat-card">
+            <p>Mese in corso</p>
+            <h2 id="meseCorrenteTotale">€0.00</h2>
+          </div>
+          <div class="card stat-card green">
+            <p>Totale struttura</p>
+            <h2 id="meseCorrenteStruttura">€0.00</h2>
+          </div>
+          <div class="card stat-card purple">
+            <p>Totale medici</p>
+            <h2 id="meseCorrenteMedici">€0.00</h2>
+          </div>
         </div>
 
-        <div class="stat-card green">
-          <p>Struttura</p>
-          <h2 id="monthStructureValue">€0</h2>
+        <button class="main-btn" type="button" id="newRegistrationBtn">
+          <span class="btn-plus">＋</span>
+          <span class="btn-text-wrap">
+            <span class="btn-title">NUOVA REGISTRAZIONE</span>
+            <span class="btn-subtitle">Giorno corrente o giorni passati</span>
+          </span>
+        </button>
+
+        <div class="toolbar">
+          <div class="period-tabs">
+            <button id="homeTabGiorno" class="tab active" type="button">Giorno</button>
+            <button id="homeTabMese" class="tab" type="button">Mese</button>
+            <button id="homeTabAnno" class="tab" type="button">Anno</button>
+          </div>
+          <button class="calendar-open-btn" type="button" id="openCalendarBtn">📅 Calendario</button>
         </div>
 
-        <div class="stat-card purple">
-          <p>Medici</p>
-          <h2 id="monthDoctorsValue">€0</h2>
+        <div class="filter-box">
+          <div id="homeFilterControlWrap"></div>
         </div>
-      </div>
 
-      <button id="openNewEntryBtn" class="main-btn">
-        <div class="btn-plus">+</div>
-        <div>
-          <strong>Nuova registrazione</strong>
-          <small>Inserisci prestazione</small>
+        <div class="totali">
+          <div class="card total-card">
+            <p>Guadagno totale</p>
+            <h2 id="homeGuadagno">€0.00</h2>
+          </div>
+          <div class="card total-card">
+            <p>Utile struttura</p>
+            <h2 id="homeUtile" class="utile">€0.00</h2>
+          </div>
         </div>
+
+        <div class="page-subtitle" id="homePeriodoLabel">Giorno/periodo selezionato</div>
+        <div id="homeWorkedDoctors" class="cards-list"></div>
+      </section>
+
+      <section id="mediciPage" class="page">
+        <div class="page-head">
+          <h2>Medici</h2>
+          <button class="small-action-btn" type="button" id="addDoctorBtn">+ Nuovo</button>
+        </div>
+        <div class="backup-tools">
+          <button class="small-action-btn" type="button" id="exportBackupBtn">💾 Backup</button>
+          <label class="small-action-btn" for="importFile">
+            📂 Importa
+          </label>
+          <input type="file" id="importFile" accept="application/json" hidden>
+        </div>
+        <div id="doctorsSimpleList" class="simple-list"></div>
+      </section>
+
+      <section id="doctorDetailPage" class="page">
+        <div class="page-head">
+          <button class="back-btn" type="button" id="backToDoctorsBtn">←</button>
+          <h2 id="doctorDetailName">Medico</h2>
+        </div>
+
+        <div class="page-subtitle">Disponibilità settimanale</div>
+        <div id="doctorAvailability" class="giorni"></div>
+
+        <div class="detail-tools">
+          <div class="filter-control">
+            <label for="doctorDetailMonth">Mese selezionato</label>
+            <input id="doctorDetailMonth" type="month" />
+          </div>
+
+          <button class="small-action-btn" type="button" id="quickAddDoctorBtn">+ Aggiungi prestazione</button>
+          <button class="small-action-btn" type="button" id="printDoctorBtn">🖨️ Stampa medico</button>
+        </div>
+
+        <div class="stats">
+          <div class="card stats-card">
+            <span class="stats-label">Guadagno medico</span>
+            <strong id="doctorTotMedico">€0.00</strong>
+          </div>
+          <div class="card stats-card">
+            <span class="stats-label">Guadagno struttura</span>
+            <strong id="doctorTotStruttura">€0.00</strong>
+          </div>
+          <div class="card stats-card">
+            <span class="stats-label">Prestazioni</span>
+            <strong id="doctorTotPrestazioni">0</strong>
+          </div>
+        </div>
+
+        <div class="card top-services-card">
+          <div class="top-services-title">Prestazioni più eseguite</div>
+          <div id="doctorTopServices" class="top-services-list"></div>
+        </div>
+
+        <div class="page-subtitle" id="doctorMonthLabel">Prestazioni del mese selezionato</div>
+        <div id="doctorMonthPrestazioni" class="cards-list"></div>
+      </section>
+
+      <section id="reportPage" class="page">
+        <div class="page-head">
+          <h2>Report</h2>
+          <button class="small-action-btn" type="button" id="printReportBtn">🖨️ Stampa</button>
+        </div>
+
+        <div class="period-tabs">
+          <button id="reportTabGiorno" class="tab active" type="button">Giorno</button>
+          <button id="reportTabMese" class="tab" type="button">Mese</button>
+          <button id="reportTabAnno" class="tab" type="button">Anno</button>
+        </div>
+
+        <div class="filter-box">
+          <div id="reportFilterControlWrap"></div>
+        </div>
+
+        <div class="page-subtitle" id="reportPeriodoLabel">Periodo selezionato</div>
+        <div id="reportPieWrap" class="pie-wrap"></div>
+        <div id="reportCards" class="report-grid"></div>
+      </section>
+
+      <section id="fatturePage" class="page">
+        <div class="page-head">
+          <h2>Fatture</h2>
+          <button class="small-action-btn" type="button" id="printInvoicesBtn">🖨️ Stampa</button>
+        </div>
+
+        <div class="fatture-filters">
+          <div class="filter-control">
+            <label for="fattureDateFrom">Da giorno</label>
+            <input id="fattureDateFrom" type="date" />
+          </div>
+          <div class="filter-control">
+            <label for="fattureDateTo">A giorno</label>
+            <input id="fattureDateTo" type="date" />
+          </div>
+          <div class="filter-control">
+            <label for="fattureStatusFilter">Stato</label>
+            <select id="fattureStatusFilter">
+              <option value="tutti">Tutti</option>
+              <option value="da_fatturare">Da fatturare</option>
+              <option value="fatturato">Fatturato</option>
+              <option value="pagato">Pagato</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="page-subtitle" id="fatturePeriodoLabel">Fatture del periodo selezionato</div>
+        <div id="fattureSummary" class="report-grid"></div>
+        <div id="fattureList" class="fatture-grid"></div>
+      </section>
+
+      <section id="calendarPage" class="page">
+        <div class="page-head">
+          <button class="back-btn" type="button" id="backToHomeBtn">←</button>
+          <h2>Calendario</h2>
+        </div>
+
+        <div class="filter-control">
+          <label for="calendarMonth">Mese</label>
+          <input id="calendarMonth" type="month" />
+        </div>
+
+        <div class="calendar-legend">
+          <span><i class="dot dot-ok"></i> giorno con registrazioni</span>
+          <span><i class="dot dot-empty"></i> nessuna registrazione</span>
+        </div>
+
+        <div id="calendarGrid" class="calendar-grid"></div>
+      </section>
+    </main>
+
+    <footer class="menu">
+      <button class="menu-btn active" data-page="homePage" type="button">
+        <span class="menu-icon">🏠</span>
+        <span class="menu-label">Home</span>
       </button>
-
-      <div class="period-tabs">
-        <button class="tab is-active" data-home-mode="day">Giorno</button>
-        <button class="tab" data-home-mode="month">Mese</button>
-        <button class="tab" data-home-mode="year">Anno</button>
-      </div>
-
-      <div id="homeFilterBox"></div>
-
-      <div id="homeEntriesList" class="cards-list"></div>
-
-    </section>
-
-    <!-- MEDICI -->
-    <section id="page-doctors" class="page">
-
-      <div class="page-head">
-        <h2>Medici</h2>
-        <button id="addDoctorBtn" class="small-action-btn">+ Aggiungi</button>
-      </div>
-
-      <div class="backup-tools">
-        <button id="exportBtn" class="small-action-btn">Backup</button>
-        <input id="importFile" type="file" hidden>
-        <label for="importFile" class="small-action-btn">Importa</label>
-      </div>
-
-      <div id="doctorCardsList" class="cards-list"></div>
-
-    </section>
-
-    <!-- PRESTAZIONI -->
-    <section id="page-services" class="page">
-
-      <h2>Prestazioni</h2>
-
-      <select id="servicesDoctorSelect"></select>
-
-      <input id="newServiceName" placeholder="Nome prestazione">
-      <input id="newServicePerc" type="number" value="60">
-
-      <button id="addServiceBtn" class="primary-btn">Salva prestazione</button>
-
-      <div id="servicesList" class="cards-list"></div>
-
-    </section>
-
-    <!-- REPORT -->
-    <section id="page-report" class="page">
-
-      <h2>Report</h2>
-
-      <div class="report-stats-grid">
-        <div>POS<br><strong id="reportPosValue">0</strong></div>
-        <div>Contanti<br><strong id="reportCashValue">0</strong></div>
-        <div>Standard<br><strong id="reportStandardValue">0</strong></div>
-        <div>Riservata<br><strong id="reportReservedValue">0</strong></div>
-      </div>
-
-      <canvas id="reportChart"></canvas>
-
-    </section>
-
-    <!-- FATTURE -->
-    <section id="page-invoices" class="page">
-
-      <h2>Fatture</h2>
-
-      <div class="backup-tools">
-        <button id="printPdfBtn" class="small-action-btn">PDF</button>
-        <button id="goBackBtn" class="small-action-btn">Indietro</button>
-      </div>
-
-      <div id="invoiceList" class="cards-list"></div>
-
-    </section>
-
-  </main>
-
-  <!-- MENU -->
-  <footer class="menu">
-    <button class="nav-btn is-active" data-page="home">🏠</button>
-    <button class="nav-btn" data-page="doctors">👨‍⚕️</button>
-    <button class="nav-btn" data-page="services">🧩</button>
-    <button class="nav-btn" data-page="report">📊</button>
-    <button class="nav-btn" data-page="invoices">🧾</button>
-  </footer>
-
-</div>
-
-<!-- MODAL -->
-<div id="entryModal" class="popup hidden">
-  <div class="popup-box">
-
-    <h2>Nuova registrazione</h2>
-
-    <select id="entryDoctorSelect"></select>
-
-    <input id="entryServiceInput" placeholder="Prestazione">
-
-    <input id="entryDateInput" type="date">
-
-    <input id="entryAmountInput" placeholder="Importo €">
-
-    <input id="entryPercInput" value="60">
-
-    <div class="actions">
-      <button id="cancelEntryBtn" class="secondary-btn">Annulla</button>
-      <button id="saveEntryBtn" class="primary-btn">Salva</button>
-    </div>
-
+      <button class="menu-btn" data-page="mediciPage" type="button">
+        <span class="menu-icon">👨‍⚕️</span>
+        <span class="menu-label">Medici</span>
+      </button>
+      <button class="menu-btn" data-page="reportPage" type="button">
+        <span class="menu-icon">📊</span>
+        <span class="menu-label">Report</span>
+      </button>
+      <button class="menu-btn" data-page="fatturePage" type="button">
+        <span class="menu-icon">🧾</span>
+        <span class="menu-label">Fatture</span>
+      </button>
+    </footer>
   </div>
-</div>
 
-<script src="app.js"></script>
+  <div id="popup" class="popup hidden">
+    <div class="popup-box">
+      <div class="popup-head">
+        <h2 id="popupTitle">Nuova Registrazione</h2>
+        <button class="close-btn" type="button" id="closePopupBtn">✕</button>
+      </div>
 
+      <select id="popupDoctorSelect"></select>
+      <input id="popupPrestazione" type="text" placeholder="Prestazione" maxlength="120" />
+      <input id="popupData" type="date" />
+      <input id="popupImporto" type="number" step="0.01" min="0" placeholder="Importo" />
+
+      <div class="perc">
+        <div class="perc-group">
+          <label for="popupPercMedico">% Medico</label>
+          <input id="popupPercMedico" type="number" min="0" max="100" value="60" />
+        </div>
+        <div class="perc-group">
+          <label for="popupPercStruttura">% Struttura</label>
+          <input id="popupPercStruttura" type="number" min="0" max="100" value="40" />
+        </div>
+      </div>
+
+      <div class="popup-preview">
+        <div>
+          <span>Guadagno medico</span>
+          <strong id="popupMedicoPreview">€0.00</strong>
+        </div>
+        <div>
+          <span>Guadagno struttura</span>
+          <strong id="popupStrutturaPreview">€0.00</strong>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="secondary-btn" type="button" id="cancelPopupBtn">Annulla</button>
+        <button class="primary-btn" type="button" id="savePopupBtn">Salva</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
