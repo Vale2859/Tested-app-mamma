@@ -16,7 +16,7 @@ const PIE_COLORS = ["#2d8cff", "#59cf82", "#9a62d8", "#eead42", "#dd5a52", "#39b
 const WEEK_DAYS = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 const DEFAULT_PRESTAZIONI = [
   "ECG", "Holter pressorio", "Holter cardiaco", "Spirometria", "Analisi pelle viso",
-  "Teledermatologia", "Autoanalisi", "Foratura lobi", "Controllo pressione oculare", "Transa Thaw"
+  "Teledermatologia", "Autoanalisi", "Foratura lobi", "Controllo pressione oculare"
 ];
 
 let doctors = [];
@@ -270,7 +270,6 @@ function openEntryPopup(entryId = null, forcedDoctorId = null, forcedDate = null
     document.getElementById("popupPercStruttura").value = 100 - entry.percMedico;
     document.getElementById("popupTipoVoce").value = entry.tipoVoce || "standard";
     document.getElementById("popupPagamento").value = entry.pagamento || "pos";
-    document.getElementById("popupTransaThaw").checked = Boolean(entry.transaThaw);
   } else {
     doctorSelect.value = String(forcedDoctorId || currentDoctorId || doctors[0].id);
     document.getElementById("popupPrestazione").value = "";
@@ -281,7 +280,6 @@ function openEntryPopup(entryId = null, forcedDoctorId = null, forcedDate = null
     document.getElementById("popupPercStruttura").value = 40;
     document.getElementById("popupTipoVoce").value = "standard";
     document.getElementById("popupPagamento").value = "pos";
-    document.getElementById("popupTransaThaw").checked = false;
   }
   updatePopupPreview(); renderPrestazioneChips(); document.getElementById("popupPrestazioneSearch").focus();
 }
@@ -302,14 +300,13 @@ function saveEntry() {
   const percMedico = parseFloat(document.getElementById("popupPercMedico").value);
   const tipoVoce = document.getElementById("popupTipoVoce").value === "riservata" ? "riservata" : "standard";
   const pagamento = document.getElementById("popupPagamento").value === "contanti" ? "contanti" : "pos";
-  const transaThaw = document.getElementById("popupTransaThaw").checked;
   if (!doctorId) return alert("Seleziona un medico");
   if (!prestazione) return alert("Inserisci la prestazione");
   if (!importo || !Number.isFinite(importo) || importo <= 0) return alert("Inserisci un importo valido");
   if (!Number.isFinite(percMedico) || percMedico < 0 || percMedico > 100) return alert("Percentuale medico non valida");
   const safeImporto = Number(importo.toFixed(2)); const safePercMedico = Number(percMedico.toFixed(2));
   const quotaMedico = Number((safeImporto * safePercMedico / 100).toFixed(2)); const quotaStruttura = Number((safeImporto - quotaMedico).toFixed(2));
-  const payload = { doctorId, prestazione, data, importo: safeImporto, percMedico: safePercMedico, quotaMedico, quotaStruttura, tipoVoce, pagamento, transaThaw };
+  const payload = { doctorId, prestazione, data, importo: safeImporto, percMedico: safePercMedico, quotaMedico, quotaStruttura, tipoVoce, pagamento, transaThaw: false };
   if (editingEntryId) {
     const entry = entries.find((item) => item.id === editingEntryId); if (!entry) return;
     Object.assign(entry, payload);
@@ -416,7 +413,7 @@ function renderDoctorDetail() {
   const topServices = buildTopServices(list); const maxCount = topServices.length ? topServices[0][1] : 1;
   document.getElementById("doctorTopServices").innerHTML = topServices.length ? topServices.map(([name, count]) => `<div class="top-service-row"><div class="top-service-head"><span>${escapeHtml(name)}</span><strong>${count}</strong></div><div class="top-service-bar"><span style="width:${Math.max(14, (count / maxCount) * 100)}%"></span></div></div>`).join("") : `<div class="empty-inline">Nessuna prestazione nel mese selezionato.</div>`;
   const wrap = document.getElementById("doctorMonthPrestazioni");
-  wrap.innerHTML = list.map((entry) => `<div class="medico-card ${entry.tipoVoce === "riservata" ? "is-riservata" : ""}"><div class="prestazione-top"><div><div class="prestazione-title">${escapeHtml(entry.prestazione)}</div><div class="prestazione-date">${formatDateLabel(entry.data)}</div></div><div class="prestazione-amount">${currency(entry.importo)}</div></div><div class="prestazione-gains"><span class="medico-val">👨‍⚕️ ${currency(entry.quotaMedico)}</span><span class="struttura-val">🏥 ${currency(entry.quotaStruttura)}</span></div><div class="entry-badges"><span class="entry-badge ${entry.tipoVoce}">${entry.tipoVoce}</span><span class="entry-badge ${entry.pagamento}">${entry.pagamento}</span>${entry.transaThaw ? `<span class="entry-badge transa">Transa Thaw</span>` : ``}</div><div class="card-actions" style="margin-top:12px;"><button class="icon-btn" type="button" data-edit-entry="${entry.id}">✏️</button><button class="icon-btn" type="button" data-delete-entry="${entry.id}">🗑️</button></div></div>`).join("") || `<div class="medico-card">Nessuna prestazione nel mese selezionato.</div>`;
+  wrap.innerHTML = list.map((entry) => `<div class="medico-card ${entry.tipoVoce === "riservata" ? "is-riservata" : ""}"><div class="prestazione-top"><div><div class="prestazione-title">${escapeHtml(entry.prestazione)}</div><div class="prestazione-date">${formatDateLabel(entry.data)}</div></div><div class="prestazione-amount">${currency(entry.importo)}</div></div><div class="prestazione-gains"><span class="medico-val">👨‍⚕️ ${currency(entry.quotaMedico)}</span><span class="struttura-val">🏥 ${currency(entry.quotaStruttura)}</span></div><div class="entry-badges"><span class="entry-badge ${entry.tipoVoce}">${entry.tipoVoce}</span><span class="entry-badge ${entry.pagamento}">${entry.pagamento}</span></div><div class="card-actions" style="margin-top:12px;"><button class="icon-btn" type="button" data-edit-entry="${entry.id}">✏️</button><button class="icon-btn" type="button" data-delete-entry="${entry.id}">🗑️</button></div></div>`).join("") || `<div class="medico-card">Nessuna prestazione nel mese selezionato.</div>`;
   wrap.querySelectorAll("[data-edit-entry]").forEach((btn) => btn.addEventListener("click", () => openEntryPopup(Number(btn.dataset.editEntry))));
   wrap.querySelectorAll("[data-delete-entry]").forEach((btn) => btn.addEventListener("click", () => deleteEntry(Number(btn.dataset.deleteEntry))));
   saveUiState();
@@ -439,9 +436,7 @@ function renderReport() {
   const totalContanti = list.filter((e) => e.pagamento === "contanti").reduce((s, e) => s + e.importo, 0);
   const totalStandard = list.filter((e) => e.tipoVoce === "standard").reduce((s, e) => s + e.importo, 0);
   const totalRiservata = list.filter((e) => e.tipoVoce === "riservata").reduce((s, e) => s + e.importo, 0);
-  const totalTransaThaw = list.filter((e) => e.transaThaw).reduce((s, e) => s + e.importo, 0);
   document.getElementById("reportPeriodoLabel").textContent = `${reportFilterType[0].toUpperCase() + reportFilterType.slice(1)} selezionato: ${periodLabel(reportFilterType, reportFilterValue)}`;
-  document.getElementById("reportTransaWrap").innerHTML = `<div class="card report-card"><div class="report-card-title">Totale Transa Thaw</div><div class="report-card-value">${currency(totalTransaThaw)}</div><div class="page-subtitle">${list.filter((e) => e.transaThaw).length} registrazioni</div></div>`;
   const pieItems = workedDoctors.map((doctorItem, idx) => ({ name: doctorItem.name, value: stats[doctorItem.id].total, color: PIE_COLORS[idx % PIE_COLORS.length] }));
   const legend = pieItems.map((item) => `<div class="legend-row"><div class="legend-left"><span class="legend-dot" style="background:${item.color}"></span><span class="legend-name">${escapeHtml(item.name)}</span></div><span class="legend-val">${currency(item.value)}</span></div>`).join("");
   document.getElementById("reportPieWrap").innerHTML = pieItems.length ? `<div class="pie-card"><div class="pie-layout">${buildPieSVG(pieItems)}<div class="pie-legend">${legend}</div></div></div>` : `<div class="medico-card">Nessun medico ha lavorato nel periodo selezionato.</div>`;
