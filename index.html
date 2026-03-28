@@ -142,6 +142,7 @@
         </div>
 
         <div class="page-subtitle" id="reportPeriodoLabel">Periodo selezionato</div>
+        <div id="reportTransaWrap" class="report-grid"></div>
         <div id="reportPieWrap" class="pie-wrap"></div>
         <div id="reportCards" class="report-grid"></div>
       </section>
@@ -168,6 +169,14 @@
               <option value="da_fatturare">Da fatturare</option>
               <option value="fatturato">Fatturato</option>
               <option value="pagato">Pagato</option>
+            </select>
+          </div>
+          <div class="filter-control">
+            <label for="fattureTypeFilter">Tipo voce</label>
+            <select id="fattureTypeFilter">
+              <option value="tutti">Tutti</option>
+              <option value="standard">Standard</option>
+              <option value="riservata">Riservata</option>
             </select>
           </div>
         </div>
@@ -225,9 +234,31 @@
       </div>
 
       <select id="popupDoctorSelect"></select>
+      <div class="prestazione-search-box">
+        <input id="popupPrestazioneSearch" type="text" placeholder="Cerca prestazione" maxlength="120" />
+        <div id="popupPrestazioneChips" class="chips-wrap"></div>
+      </div>
       <input id="popupPrestazione" type="text" placeholder="Prestazione" maxlength="120" />
       <input id="popupData" type="date" />
       <input id="popupImporto" type="number" step="0.01" min="0" placeholder="Importo" />
+
+      <div class="popup-extra-grid">
+        <div class="perc-group">
+          <label for="popupTipoVoce">Tipo voce</label>
+          <select id="popupTipoVoce">
+            <option value="standard">Standard</option>
+            <option value="riservata">Riservata</option>
+          </select>
+        </div>
+        <div class="perc-group">
+          <label for="popupPagamento">Pagamento</label>
+          <select id="popupPagamento">
+            <option value="pos">POS</option>
+            <option value="contanti">Contanti</option>
+          </select>
+        </div>
+      </div>
+      <label class="check-row"><input id="popupTransaThaw" type="checkbox" /> <span>Segna come Transa Thaw</span></label>
 
       <div class="perc">
         <div class="perc-group">

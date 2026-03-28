@@ -1091,3 +1091,98 @@ button{
   color:#6e7b88;
   font-size:14px;
 }
+
+.report-grid.single-top{
+  margin-bottom:12px;
+}
+
+.popup-extra-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin:12px 0;
+}
+
+.check-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:.92rem;
+  font-weight:700;
+  color:#435264;
+  margin-bottom:12px;
+}
+
+.check-row input{
+  width:18px;
+  height:18px;
+}
+
+.prestazione-search-box{
+  margin:12px 0 10px;
+}
+
+#popupPrestazioneSearch{
+  width:100%;
+}
+
+.chips-wrap{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding:10px 2px 2px;
+  scrollbar-width:none;
+}
+
+.chips-wrap::-webkit-scrollbar{display:none;}
+
+.chip-btn{
+  flex:0 0 auto;
+  background:#f2f7fb;
+  border:1px solid rgba(27,44,70,.08);
+  border-radius:999px;
+  padding:9px 12px;
+  font-size:.82rem;
+  font-weight:800;
+  color:#35516a;
+  white-space:nowrap;
+}
+
+.chip-btn.primary{
+  background:linear-gradient(90deg,var(--green),var(--blue));
+  color:#fff;
+  border:none;
+}
+
+.entry-badges{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:10px;
+}
+
+.entry-badge{
+  display:inline-flex;
+  align-items:center;
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:.74rem;
+  font-weight:900;
+  letter-spacing:.02em;
+}
+
+.entry-badge.standard{background:rgba(45,140,255,.12); color:#1558b6;}
+.entry-badge.riservata{background:rgba(110,123,136,.18); color:#3f4d5c;}
+.entry-badge.pos{background:rgba(89,207,130,.15); color:#20814a;}
+.entry-badge.contanti{background:rgba(238,173,66,.16); color:#99630d;}
+.entry-badge.transa{background:rgba(154,98,216,.14); color:#6e36ab;}
+
+.medico-card.is-riservata{
+  border:1.5px solid rgba(110,123,136,.28);
+  background:linear-gradient(180deg,#fbfcfd 0%, #f0f3f6 100%);
+}
+
+.calendar-day.has-riservata{
+  background:linear-gradient(180deg,#e9edf1 0%, #dee5ec 100%);
+  border-color:rgba(110,123,136,.35);
+}
