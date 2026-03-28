@@ -459,7 +459,7 @@ input, select{
   z-index:20;
 }
 
-.menu-btn{
+.nav-btn{
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -470,11 +470,10 @@ input, select{
   color:#607081;
 }
 
-.menu-btn.active{
+.nav-btn.is-active{
   color:#1674e8;
   background:#eef5ff;
 }
-
 .menu-icon{
   font-size:1.08rem;
 }
