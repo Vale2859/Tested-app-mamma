@@ -48,32 +48,39 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function escapeJs(value) {
+  return String(value ?? "")
+    .replaceAll("\\", "\\\\")
+    .replaceAll("'", "\\'");
+}
+
 function loadData() {
   doctors = JSON.parse(localStorage.getItem(STORAGE_KEYS.doctors)) || [];
   entries = JSON.parse(localStorage.getItem(STORAGE_KEYS.entries)) || [];
   invoiceStates = JSON.parse(localStorage.getItem(STORAGE_KEYS.invoiceStates)) || {};
-
   normalizeData();
 }
 
 function normalizeData() {
   doctors = doctors.map((doctor) => {
     const normalizedServices = Array.isArray(doctor.prestazioni)
-      ? doctor.prestazioni.map((service) => {
-          if (typeof service === "string") {
-            return { nome: service, perc: 60, count: 0 };
-          }
+      ? doctor.prestazioni
+          .map((service) => {
+            if (typeof service === "string") {
+              return { nome: service, perc: 60, count: 0 };
+            }
 
-          return {
-            nome: service.nome || service.name || "",
-            perc: Number(service.perc ?? service.percentuale ?? 60),
-            count: Number(service.count ?? 0)
-          };
-        }).filter((service) => service.nome)
+            return {
+              nome: service.nome || service.name || "",
+              perc: Number(service.perc ?? service.percentuale ?? 60),
+              count: Number(service.count ?? 0)
+            };
+          })
+          .filter((service) => service.nome)
       : [];
 
     return {
-      id: doctor.id,
+      id: Number(doctor.id),
       name: doctor.name || "",
       availability: Array.isArray(doctor.availability) ? doctor.availability : [],
       prestazioni: normalizedServices
@@ -85,15 +92,19 @@ function normalizeData() {
     if (tipo === "nero") tipo = "riservata";
     if (tipo === "normale") tipo = "standard";
 
+    const importo = Number(entry.importo || 0);
+    const quotaMedico = Number(entry.quotaMedico || 0);
+    const quotaStruttura = Number(entry.quotaStruttura || 0);
+
     return {
-      id: entry.id,
+      id: Number(entry.id),
       doctorId: Number(entry.doctorId),
       prestazione: entry.prestazione || "",
       data: entry.data || todayISO(),
-      importo: Number(entry.importo || 0),
-      percMedico: Number(entry.percMedico ?? calcPerc(entry)),
-      quotaMedico: Number(entry.quotaMedico || 0),
-      quotaStruttura: Number(entry.quotaStruttura || 0),
+      importo,
+      percMedico: Number(entry.percMedico ?? calcPerc(importo, quotaMedico)),
+      quotaMedico,
+      quotaStruttura,
       metodo: entry.metodo || "contanti",
       tipo
     };
@@ -102,24 +113,22 @@ function normalizeData() {
   rebuildServiceUsageCounts();
 }
 
-function calcPerc(entry) {
-  const amount = Number(entry.importo || 0);
-  const doctorShare = Number(entry.quotaMedico || 0);
-  if (!amount) return 60;
-  return Math.round((doctorShare / amount) * 100);
+function calcPerc(importo, quotaMedico) {
+  if (!importo) return 60;
+  return Math.round((quotaMedico / importo) * 100);
 }
 
 function rebuildServiceUsageCounts() {
   const counts = new Map();
 
   entries.forEach((entry) => {
-    const key = `${entry.doctorId}__${entry.prestazione}`;
+    const key = `${entry.doctorId}__${entry.prestazione}`.toLowerCase();
     counts.set(key, (counts.get(key) || 0) + 1);
   });
 
   doctors.forEach((doctor) => {
     doctor.prestazioni.forEach((service) => {
-      const key = `${doctor.id}__${service.nome}`;
+      const key = `${doctor.id}__${service.nome}`.toLowerCase();
       service.count = counts.get(key) || 0;
     });
   });
@@ -132,17 +141,10 @@ function saveAll() {
   renderAll();
 }
 
-function setPage(pageName) {
-  document.querySelectorAll(".page").forEach((page) => page.classList.remove("is-active"));
-  document.querySelector(`#page-${pageName}`)?.classList.add("is-active");
-
-  document.querySelectorAll(".nav-btn").forEach((btn) => {
-    btn.classList.toggle("is-active", btn.dataset.page === pageName);
-  });
-
-  if (pageName === "report") renderReport();
-  if (pageName === "invoices") renderInvoices();
-  if (pageName === "services") renderServicesPage();
+function initLogin() {
+  if (localStorage.getItem(STORAGE_KEYS.login) === "ok") {
+    document.getElementById("loginScreen")?.classList.add("hidden");
+  }
 }
 
 function login() {
@@ -161,10 +163,17 @@ function logout() {
   document.getElementById("loginScreen")?.classList.remove("hidden");
 }
 
-function initLogin() {
-  if (localStorage.getItem(STORAGE_KEYS.login) === "ok") {
-    document.getElementById("loginScreen")?.classList.add("hidden");
-  }
+function setPage(pageName) {
+  document.querySelectorAll(".page").forEach((page) => page.classList.remove("is-active"));
+  document.getElementById(`page-${pageName}`)?.classList.add("is-active");
+
+  document.querySelectorAll(".nav-btn").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.page === pageName);
+  });
+
+  if (pageName === "report") renderReport();
+  if (pageName === "invoices") renderInvoices();
+  if (pageName === "services") renderServicesPage();
 }
 
 function addDoctor() {
@@ -185,10 +194,16 @@ function deleteDoctor(doctorId) {
   const doctor = doctors.find((item) => item.id === doctorId);
   if (!doctor) return;
 
-  const ok = confirm(`Eliminare ${doctor.name}?`);
-  if (!ok) return;
+  if (!confirm(`Eliminare ${doctor.name}?`)) return;
 
   doctors = doctors.filter((item) => item.id !== doctorId);
+  entries = entries.filter((entry) => entry.doctorId !== doctorId);
+
+  Object.keys(invoiceStates).forEach((key) => {
+    const entry = entries.find((e) => String(e.id) === String(key));
+    if (!entry) delete invoiceStates[key];
+  });
+
   saveAll();
 }
 
@@ -197,20 +212,9 @@ function addServiceToDoctor() {
   const serviceName = (document.getElementById("newServiceName")?.value || "").trim();
   const servicePerc = Number(document.getElementById("newServicePerc")?.value || 0);
 
-  if (!doctorId) {
-    alert("Seleziona un medico");
-    return;
-  }
-
-  if (!serviceName) {
-    alert("Inserisci una prestazione");
-    return;
-  }
-
-  if (servicePerc < 0 || servicePerc > 100) {
-    alert("Inserisci una percentuale valida");
-    return;
-  }
+  if (!doctorId) return alert("Seleziona un medico");
+  if (!serviceName) return alert("Inserisci una prestazione");
+  if (servicePerc < 0 || servicePerc > 100) return alert("Inserisci una percentuale valida");
 
   const doctor = doctors.find((item) => item.id === doctorId);
   if (!doctor) return;
@@ -295,8 +299,9 @@ function getAllUniqueServices() {
 
   doctors.forEach((doctor) => {
     doctor.prestazioni.forEach((service) => {
-      if (!map.has(service.nome.toLowerCase())) {
-        map.set(service.nome.toLowerCase(), {
+      const key = service.nome.toLowerCase();
+      if (!map.has(key)) {
+        map.set(key, {
           nome: service.nome,
           perc: service.perc
         });
@@ -342,10 +347,6 @@ function updateEntryServicePicker() {
 
 function makeServiceChip(service) {
   return `<button class="pill-chip" type="button" onclick="selectServiceFromPicker('${escapeJs(service.nome)}', ${Number(service.perc || 60)})">${escapeHtml(service.nome)}</button>`;
-}
-
-function escapeJs(value) {
-  return String(value).replaceAll("\\", "\\\\").replaceAll("'", "\\'");
 }
 
 function selectServiceFromPicker(serviceName, servicePerc) {
@@ -415,12 +416,8 @@ function saveEntry() {
 }
 
 function getFilteredEntries(mode, selected) {
-  if (mode === "day") {
-    return entries.filter((entry) => entry.data === selected);
-  }
-  if (mode === "month") {
-    return entries.filter((entry) => entry.data.startsWith(selected));
-  }
+  if (mode === "day") return entries.filter((entry) => entry.data === selected);
+  if (mode === "month") return entries.filter((entry) => entry.data.startsWith(selected));
   return entries.filter((entry) => entry.data.startsWith(selected));
 }
 
@@ -492,8 +489,7 @@ function renderHome() {
   container.innerHTML = sorted.length
     ? sorted.map((entry) => {
         const doctor = doctors.find((item) => item.id === entry.doctorId);
-        const invoiceKey = `${entry.id}`;
-        const currentState = invoiceStates[invoiceKey] || "da_fatturare";
+        const currentState = invoiceStates[entry.id] || "da_fatturare";
 
         return `
           <div class="entry-card">
@@ -501,7 +497,7 @@ function renderHome() {
             <div class="entry-sub">${escapeHtml(entry.data)} · ${escapeHtml(entry.metodo)} · ${escapeHtml(entry.tipo)} · ${euro(entry.importo)}</div>
             <div class="card-actions">
               <div class="state-pill state-${currentState}">${labelInvoiceState(currentState)}</div>
-              <button class="small-pill-btn" type="button" onclick="cycleInvoiceState('${invoiceKey}')">Cambia stato</button>
+              <button class="small-pill-btn" type="button" onclick="cycleInvoiceState(${entry.id})">Cambia stato</button>
             </div>
           </div>
         `;
@@ -616,9 +612,7 @@ function renderReport() {
   const canvas = document.getElementById("reportChart");
   if (!canvas || typeof Chart === "undefined") return;
 
-  if (reportChart) {
-    reportChart.destroy();
-  }
+  if (reportChart) reportChart.destroy();
 
   reportChart = new Chart(canvas, {
     type: "pie",
@@ -633,9 +627,7 @@ function renderReport() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          position: "top"
-        }
+        legend: { position: "top" }
       }
     }
   });
@@ -743,10 +735,7 @@ function printPdf() {
   `;
 
   const win = window.open("", "_blank");
-  if (!win) {
-    alert("Popup bloccato dal browser");
-    return;
-  }
+  if (!win) return alert("Popup bloccato dal browser");
 
   win.document.open();
   win.document.write(html);
