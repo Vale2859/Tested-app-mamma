@@ -5,271 +5,201 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ANVAMED Manager</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div id="loginScreen" class="login-screen">
-    <div class="login-card glass-card">
-      <div class="login-logo">ANVAMED</div>
-      <div class="login-subtitle">MANAGER</div>
-      <p class="login-text">Accesso riservato gestione prestazioni, report e fatture.</p>
-      <input id="pinInput" class="input" type="password" placeholder="Inserisci PIN" inputmode="numeric" />
-      <button id="loginBtn" class="primary-btn" type="button">Entra</button>
-    </div>
-  </div>
-
   <div class="app-shell">
     <header class="header">
-      <div>
-        <div class="brand-title">ANVAMED</div>
-        <div class="brand-subtitle">MANAGER</div>
-      </div>
-      <button id="logoutBtn" class="logout-btn" type="button">Esci</button>
+      <div class="brand-title">ANVAMED</div>
+      <div class="brand-subtitle">MANAGER</div>
     </header>
 
     <main class="main-content">
-      <section id="page-home" class="page is-active">
-        <div class="premium-hero card">
-          <div>
-            <p class="hero-kicker">Panoramica rapida</p>
-            <h1>Gestione giornaliera completa</h1>
-            <span class="hero-badge" id="homeHeroBadge">Oggi</span>
-          </div>
-          <button class="main-btn hero-btn" id="openNewEntryBtn" type="button">
-            <span class="btn-plus">＋</span>
-            <span class="btn-text-wrap">
-              <span class="btn-title">NUOVA REGISTRAZIONE</span>
-              <span class="btn-subtitle">Giorno corrente o giorni passati</span>
-            </span>
-          </button>
-        </div>
-
-        <div class="top-cards compact-grid">
-          <div class="card stat-card premium-accent-green">
+      <!-- HOME -->
+      <section id="homePage" class="page active">
+        <div class="top-cards">
+          <div class="card stat-card">
             <p>Mese in corso</p>
-            <h2 id="monthTotalValue">€0,00</h2>
+            <h2 id="meseCorrenteTotale">€0.00</h2>
           </div>
-          <div class="card stat-card premium-accent-blue">
+          <div class="card stat-card green">
             <p>Totale struttura</p>
-            <h2 id="monthStructureValue">€0,00</h2>
+            <h2 id="meseCorrenteStruttura">€0.00</h2>
           </div>
-          <div class="card stat-card premium-accent-purple">
+          <div class="card stat-card purple">
             <p>Totale medici</p>
-            <h2 id="monthDoctorsValue">€0,00</h2>
+            <h2 id="meseCorrenteMedici">€0.00</h2>
           </div>
         </div>
 
-        <div class="home-two-cols">
-          <div class="left-stack">
-            <div class="toolbar card toolbar-card">
-              <div class="period-tabs">
-                <button class="tab is-active" data-home-mode="day" type="button">Giorno</button>
-                <button class="tab" data-home-mode="month" type="button">Mese</button>
-                <button class="tab" data-home-mode="year" type="button">Anno</button>
-              </div>
-              <button class="calendar-open-btn" id="openCalendarBtn" type="button">📅 Calendario completo</button>
-            </div>
+        <button class="main-btn" type="button" id="newRegistrationBtn">
+          <span class="btn-plus">＋</span>
+          <span class="btn-text-wrap">
+            <span class="btn-title">NUOVA REGISTRAZIONE</span>
+            <span class="btn-subtitle">Giorno corrente o giorni passati</span>
+          </span>
+        </button>
 
-            <div class="filter-box">
-              <div class="filter-control">
-                <label id="homeFilterTitle">Giorno selezionato</label>
-                <div id="homeFilterBox"></div>
-              </div>
-            </div>
-
-            <div class="page-head compact">
-              <h2>Registrazioni</h2>
-              <span class="page-subtitle" id="homePeriodBadge">oggi</span>
-            </div>
-            <div id="homeEntriesList" class="cards-list"></div>
+        <div class="toolbar">
+          <div class="period-tabs">
+            <button id="homeTabGiorno" class="tab active" type="button">Giorno</button>
+            <button id="homeTabMese" class="tab" type="button">Mese</button>
+            <button id="homeTabAnno" class="tab" type="button">Anno</button>
           </div>
-
-          <div class="right-stack">
-            <div class="calendar-inline card">
-              <div class="page-head compact-head">
-                <h3>Calendario visuale</h3>
-                <span class="page-subtitle" id="calendarMonthLabel"></span>
-              </div>
-              <div class="calendar-weekdays">
-                <span>Lun</span><span>Mar</span><span>Mer</span><span>Gio</span><span>Ven</span><span>Sab</span><span>Dom</span>
-              </div>
-              <div id="homeCalendarGrid" class="calendar-grid"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="page-doctors" class="page">
-        <div class="page-head">
-          <h2>Medici</h2>
-          <button class="small-action-btn" id="addDoctorBtn" type="button">+ Nuovo</button>
-        </div>
-
-        <div class="backup-tools">
-          <button class="small-action-btn" id="exportBtn" type="button">💾 Backup</button>
-          <label class="small-action-btn import-label">
-            📂 Importa
-            <input id="importFile" type="file" accept=".json" hidden />
-          </label>
-        </div>
-
-        <div id="doctorCardsList" class="doctors-grid"></div>
-      </section>
-
-      <section id="page-services" class="page">
-        <div class="page-head">
-          <h2>Prestazioni</h2>
-          <span class="page-subtitle">Medico per medico</span>
-        </div>
-
-        <div class="service-add-grid">
-          <div class="filter-control">
-            <label for="servicesDoctorSelect">Medico</label>
-            <select id="servicesDoctorSelect"></select>
-          </div>
-          <div class="filter-control filter-control-inline">
-            <label>Andamento prestazioni</label>
-            <div class="period-tabs mini-tabs">
-              <button class="tab is-active" data-services-mode="day" type="button">Giorno</button>
-              <button class="tab" data-services-mode="month" type="button">Mese</button>
-              <button class="tab" data-services-mode="year" type="button">Anno</button>
-            </div>
-          </div>
+          <button class="calendar-open-btn" type="button" id="openCalendarBtn">📅 Calendario</button>
         </div>
 
         <div class="filter-box">
-          <div class="filter-control">
-            <label id="servicesFilterTitle">Giorno selezionato</label>
-            <div id="servicesFilterBox"></div>
+          <div id="homeFilterControlWrap"></div>
+        </div>
+
+        <div class="totali">
+          <div class="card total-card">
+            <p>Guadagno totale</p>
+            <h2 id="homeGuadagno">€0.00</h2>
+          </div>
+          <div class="card total-card">
+            <p>Utile struttura</p>
+            <h2 id="homeUtile" class="utile">€0.00</h2>
           </div>
         </div>
 
-        <div class="chart-card services-chart-card">
-          <div class="page-head compact-head">
-            <h3>Prestazioni più eseguite</h3>
-            <span class="page-subtitle" id="servicesChartSubtitle"></span>
-          </div>
-          <canvas id="servicesChart"></canvas>
-          <div id="servicesChartFallback" class="chart-fallback hidden"></div>
-        </div>
-
-        <div class="service-add-grid add-row">
-          <div class="filter-control">
-            <label for="newServiceName">Prestazione</label>
-            <input id="newServiceName" type="text" placeholder="Es. Visita" />
-          </div>
-          <div class="filter-control">
-            <label for="newServicePerc">% Medico</label>
-            <input id="newServicePerc" type="number" min="0" max="100" value="60" />
-          </div>
-        </div>
-
-        <button class="primary-btn" id="addServiceBtn" type="button">Aggiungi prestazione</button>
-        <div id="servicesList" class="cards-list" style="margin-top:14px;"></div>
+        <div class="page-subtitle" id="homePeriodoLabel">Giorno/periodo selezionato</div>
+        <div id="homeWorkedDoctors" class="cards-list"></div>
       </section>
 
-      <section id="page-report" class="page">
+      <!-- MEDICI -->
+      <section id="mediciPage" class="page">
         <div class="page-head">
-          <h2>Report</h2>
-          <span class="page-subtitle">Riepilogo</span>
+          <h2>Medici</h2>
+          <button class="small-action-btn" type="button" id="addDoctorBtn">+ Nuovo</button>
+        </div>
+        <div class="backup-tools">
+  <button class="small-action-btn" onclick="exportData()">💾 Backup</button>
+
+  <label class="small-action-btn">
+    📂 Importa
+    <input type="file" id="importFile" hidden>
+  </label>
+</div>
+  <div id="doctorsSimpleList" class="simple-list"></div>
+      </section>
+
+      <!-- DETTAGLIO MEDICO -->
+      <section id="doctorDetailPage" class="page">
+        <div class="page-head">
+          <button class="back-btn" type="button" id="backToDoctorsBtn">←</button>
+          <h2 id="doctorDetailName">Medico</h2>
+        </div>
+
+        <div class="page-subtitle">Disponibilità settimanale</div>
+        <div id="doctorAvailability" class="giorni"></div>
+
+        <div class="detail-tools">
+          <div class="filter-control">
+            <label for="doctorDetailMonth">Mese selezionato</label>
+            <input id="doctorDetailMonth" type="month" />
+          </div>
+
+          <button class="small-action-btn" type="button" id="quickAddDoctorBtn">+ Aggiungi prestazione</button>
+          <button class="small-action-btn" type="button" id="printDoctorBtn">🖨️ Stampa medico</button>
+        </div>
+
+        <div class="page-subtitle">Esami più eseguiti</div>
+        <div id="doctorExamChart" class="rank-chart compact"></div>
+
+        <div class="stats">
+          <div class="card stats-card">
+            <span class="stats-label">Guadagno medico</span>
+            <strong id="doctorTotMedico">€0.00</strong>
+          </div>
+          <div class="card stats-card">
+            <span class="stats-label">Guadagno struttura</span>
+            <strong id="doctorTotStruttura">€0.00</strong>
+          </div>
+          <div class="card stats-card">
+            <span class="stats-label">Prestazioni</span>
+            <strong id="doctorTotPrestazioni">0</strong>
+          </div>
+        </div>
+
+        <div class="page-subtitle" id="doctorMonthLabel">Prestazioni del mese selezionato</div>
+        <div id="doctorMonthPrestazioni" class="cards-list"></div>
+      </section>
+
+      <!-- PRESTAZIONI -->
+      <section id="prestazioniPage" class="page">
+        <div class="page-head">
+          <h2>Prestazioni</h2>
         </div>
 
         <div class="period-tabs">
-          <button class="tab is-active" data-report-mode="day" type="button">Giorno</button>
-          <button class="tab" data-report-mode="month" type="button">Mese</button>
-          <button class="tab" data-report-mode="year" type="button">Anno</button>
+          <button id="prestazioniTabGiorno" class="tab active" type="button">Giorno</button>
+          <button id="prestazioniTabMese" class="tab" type="button">Mese</button>
+          <button id="prestazioniTabAnno" class="tab" type="button">Anno</button>
         </div>
 
         <div class="filter-box">
-          <div class="filter-control">
-            <label id="reportFilterTitle">Giorno selezionato</label>
-            <div id="reportFilterBox"></div>
-          </div>
+          <div id="prestazioniFilterControlWrap"></div>
         </div>
 
-        <div class="card transa-card">
-          <div>
-            <span class="transa-label">Totale Transa Thaw</span>
-            <strong id="reportTransaValue">€0,00</strong>
-          </div>
-          <span class="transa-note">Filtrabile per giorno, mese e anno</span>
-        </div>
-
-        <div class="report-stats-grid">
-          <div class="card report-mini-card">
-            <span>POS</span>
-            <strong id="reportPosValue">€0,00</strong>
-          </div>
-          <div class="card report-mini-card">
-            <span>Contanti</span>
-            <strong id="reportCashValue">€0,00</strong>
-          </div>
-          <div class="card report-mini-card">
-            <span>Standard</span>
-            <strong id="reportStandardValue">€0,00</strong>
-          </div>
-          <div class="card report-mini-card">
-            <span>Riservata</span>
-            <strong id="reportReservedValue">€0,00</strong>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <canvas id="reportChart"></canvas>
-        </div>
+        <div class="page-subtitle" id="prestazioniPeriodoLabel">Prestazioni del periodo selezionato</div>
+        <div id="prestazioniChart" class="rank-chart"></div>
+        <div id="prestazioniList" class="cards-list"></div>
       </section>
 
-      <section id="page-invoices" class="page">
+      <!-- REPORT -->
+      <section id="reportPage" class="page">
         <div class="page-head">
-          <h2>Fatture</h2>
-          <div class="invoice-top-actions">
-            <button class="small-action-btn" id="printPdfBtn" type="button">PDF</button>
-            <button class="small-action-btn" id="goBackBtn" type="button">Indietro</button>
-          </div>
+          <h2>Report</h2>
+          <button class="small-action-btn" type="button" id="printReportBtn">🖨️ Stampa</button>
         </div>
 
-        <div class="fatture-filters fatture-filters-advanced">
+        <div class="period-tabs">
+          <button id="reportTabGiorno" class="tab active" type="button">Giorno</button>
+          <button id="reportTabMese" class="tab" type="button">Mese</button>
+          <button id="reportTabAnno" class="tab" type="button">Anno</button>
+        </div>
+
+        <div class="filter-box">
+          <div id="reportFilterControlWrap"></div>
+        </div>
+
+        <div class="page-subtitle" id="reportPeriodoLabel">Periodo selezionato</div>
+        <div id="transaThawBox" class="wide-highlight-card"></div>
+        <div id="reportPieWrap" class="pie-wrap"></div>
+        <div id="reportCards" class="report-grid"></div>
+      </section>
+
+      <!-- FATTURE -->
+      <section id="fatturePage" class="page">
+        <div class="page-head">
+          <h2>Fatture</h2>
+          <button class="small-action-btn" type="button" id="printInvoicesBtn">🖨️ Stampa</button>
+        </div>
+
+        <div class="fatture-filters">
           <div class="filter-control">
-            <label for="invoiceDoctorFilter">Medico</label>
-            <select id="invoiceDoctorFilter"></select>
-          </div>
-          <div class="filter-control">
-            <label for="invoiceModeFilter">Vista periodo</label>
-            <select id="invoiceModeFilter">
-              <option value="all">Tutto</option>
-              <option value="day">Giorno</option>
-              <option value="month">Mese</option>
-              <option value="year">Anno</option>
+            <label for="fatturePeriodType">Vista</label>
+            <select id="fatturePeriodType">
+              <option value="giorno">Giorno</option>
+              <option value="mese">Mese</option>
+              <option value="anno">Anno</option>
+              <option value="intervallo">Intervallo</option>
             </select>
           </div>
-          <div class="filter-control" id="invoiceDateWrap">
-            <label for="invoiceDateFilter">Data</label>
-            <input id="invoiceDateFilter" type="date" />
-          </div>
-          <div class="filter-control hidden" id="invoiceMonthWrap">
-            <label for="invoiceMonthFilter">Mese</label>
-            <input id="invoiceMonthFilter" type="month" />
-          </div>
-          <div class="filter-control hidden" id="invoiceYearWrap">
-            <label for="invoiceYearFilter">Anno</label>
-            <input id="invoiceYearFilter" type="number" min="2000" max="2099" />
-          </div>
+          <div class="filter-control" id="fatturePeriodControlWrap"></div>
           <div class="filter-control">
-            <label for="invoiceTypeFilter">Tipo voce</label>
-            <select id="invoiceTypeFilter">
-              <option value="">Tutte</option>
+            <label for="fattureTypeFilter">Tipo voce</label>
+            <select id="fattureTypeFilter">
+              <option value="tutti">Tutti</option>
               <option value="standard">Standard</option>
               <option value="riservata">Riservata</option>
             </select>
           </div>
           <div class="filter-control">
-            <label for="invoiceAmountFilter">Importo</label>
-            <input id="invoiceAmountFilter" type="number" placeholder="Es. 100" />
-          </div>
-          <div class="filter-control">
-            <label for="invoiceStateFilter">Stato</label>
-            <select id="invoiceStateFilter">
-              <option value="">Tutti</option>
+            <label for="fattureStatusFilter">Stato</label>
+            <select id="fattureStatusFilter">
+              <option value="tutti">Tutti</option>
               <option value="da_fatturare">Da fatturare</option>
               <option value="fatturato">Fatturato</option>
               <option value="pagato">Pagato</option>
@@ -277,144 +207,112 @@
           </div>
         </div>
 
-        <div id="invoiceList" class="fatture-grid"></div>
+        <div class="page-subtitle" id="fatturePeriodoLabel">Fatture del periodo selezionato</div>
+        <div id="fattureSummary" class="report-grid"></div>
+        <div id="fattureList" class="fatture-grid"></div>
+      </section>
+
+      <!-- CALENDARIO -->
+      <section id="calendarPage" class="page">
+        <div class="page-head">
+          <button class="back-btn" type="button" id="backToHomeBtn">←</button>
+          <h2>Calendario</h2>
+        </div>
+
+        <div class="filter-control">
+          <label for="calendarMonth">Mese</label>
+          <input id="calendarMonth" type="month" />
+        </div>
+
+        <div class="calendar-legend">
+          <span><i class="dot dot-ok"></i> giorno con registrazioni</span>
+          <span><i class="dot dot-empty"></i> nessuna registrazione</span>
+        </div>
+
+        <div id="calendarGrid" class="calendar-grid"></div>
       </section>
     </main>
 
     <footer class="menu">
-      <button class="nav-btn is-active" data-page="home" type="button"><span class="menu-icon">🏠</span><span class="menu-label">Home</span></button>
-      <button class="nav-btn" data-page="doctors" type="button"><span class="menu-icon">👨‍⚕️</span><span class="menu-label">Medici</span></button>
-      <button class="nav-btn" data-page="services" type="button"><span class="menu-icon">🧩</span><span class="menu-label">Prestazioni</span></button>
-      <button class="nav-btn" data-page="report" type="button"><span class="menu-icon">📊</span><span class="menu-label">Report</span></button>
-      <button class="nav-btn" data-page="invoices" type="button"><span class="menu-icon">🧾</span><span class="menu-label">Fatture</span></button>
+      <button class="menu-btn active" data-page="homePage" type="button">
+        <span class="menu-icon">🏠</span>
+        <span class="menu-label">Home</span>
+      </button>
+      <button class="menu-btn" data-page="mediciPage" type="button">
+        <span class="menu-icon">👨‍⚕️</span>
+        <span class="menu-label">Medici</span>
+      </button>
+      <button class="menu-btn" data-page="prestazioniPage" type="button">
+        <span class="menu-icon">🧪</span>
+        <span class="menu-label">Prestazioni</span>
+      </button>
+      <button class="menu-btn" data-page="reportPage" type="button">
+        <span class="menu-icon">📊</span>
+        <span class="menu-label">Report</span>
+      </button>
+      <button class="menu-btn" data-page="fatturePage" type="button">
+        <span class="menu-icon">🧾</span>
+        <span class="menu-label">Fatture</span>
+      </button>
     </footer>
   </div>
 
-  <div id="entryModal" class="popup hidden">
-    <div class="popup-box premium-modal">
+  <!-- POPUP PRESTAZIONE -->
+  <div id="popup" class="popup hidden">
+    <div class="popup-box">
       <div class="popup-head">
-        <div>
-          <h2>Nuova Registrazione</h2>
-          <p class="popup-subtitle">Compila la registrazione in modo rapido e ordinato.</p>
-        </div>
-        <button class="close-btn" id="closeEntryModalBtn" type="button">✕</button>
+        <h2 id="popupTitle">Nuova Registrazione</h2>
+        <button class="close-btn" type="button" id="closePopupBtn">✕</button>
       </div>
 
-      <div class="popup-grid">
-        <div class="filter-control">
-          <label for="entryDoctorSelect">Medico</label>
-          <select id="entryDoctorSelect"></select>
-        </div>
+      <select id="popupDoctorSelect"></select>
+      <input id="popupPrestazione" type="text" placeholder="Prestazione" />
+      <input id="popupData" type="date" />
+      <input id="popupImporto" type="number" step="0.01" placeholder="Importo" />
 
-        <div class="filter-control">
-          <label for="entryDateInput">Data</label>
-          <input id="entryDateInput" type="date" />
+      <div class="popup-two-cols">
+        <div class="field-box">
+          <label for="popupTipoVoce">Tipo voce</label>
+          <select id="popupTipoVoce">
+            <option value="standard">Standard</option>
+            <option value="riservata">Riservata</option>
+          </select>
         </div>
-      </div>
-
-      <div class="service-picker-top">
-        <input id="entryServiceInput" type="text" placeholder="Scrivi o cerca prestazione" />
-        <button class="search-toggle-btn" id="toggleServicePickerBtn" type="button">🔍</button>
-      </div>
-
-      <div id="servicePickerPanel" class="service-picker hidden">
-        <input id="serviceSearchInput" class="service-search-input" type="text" placeholder="Cerca una prestazione" />
-        <div class="picker-block">
-          <div class="picker-title">Più usate con questo medico</div>
-          <div id="commonServicesRow" class="pill-row"></div>
-        </div>
-        <div class="picker-block">
-          <div class="picker-title">Tutte le altre</div>
-          <div id="allServicesRow" class="pill-row"></div>
+        <div class="field-box">
+          <label for="popupMetodoPagamento">Pagamento</label>
+          <select id="popupMetodoPagamento">
+            <option value="pos">POS</option>
+            <option value="contanti">Contanti</option>
+          </select>
         </div>
       </div>
 
-      <div class="entry-money-row premium-entry-row">
-        <div class="filter-control compact-control">
-          <label for="entryAmountInput">Importo</label>
-          <input id="entryAmountInput" type="number" placeholder="€" />
+      <div class="perc">
+        <div class="perc-group">
+          <label for="popupPercMedico">% Medico</label>
+          <input id="popupPercMedico" type="number" min="0" max="100" value="60" />
         </div>
-        <div class="filter-control compact-control">
-          <label>Metodo</label>
-          <div class="entry-methods entry-methods-inline">
-            <button class="method-btn is-active" data-method="pos" type="button">POS</button>
-            <button class="method-btn" data-method="contanti" type="button">Contanti</button>
-          </div>
+        <div class="perc-group">
+          <label for="popupPercStruttura">% Struttura</label>
+          <input id="popupPercStruttura" type="number" min="0" max="100" value="40" />
         </div>
       </div>
 
-      <div class="entry-bottom-grid">
-        <div class="filter-control compact-control">
-          <label for="entryPercInput">% Medico</label>
-          <input id="entryPercInput" type="number" min="0" max="100" value="60" />
-        </div>
-        <div class="filter-control compact-control">
-          <label>Tipo voce</label>
-          <div class="type-toggle">
-            <button class="type-btn is-active" data-type="standard" type="button">Standard</button>
-            <button class="type-btn" data-type="riservata" type="button">Riservata</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="popup-preview premium-preview">
+      <div class="popup-preview">
         <div>
           <span>Guadagno medico</span>
-          <strong id="entryDoctorQuotaPreview">€0,00</strong>
+          <strong id="popupMedicoPreview">€0.00</strong>
         </div>
         <div>
           <span>Guadagno struttura</span>
-          <strong id="entryStructureQuotaPreview">€0,00</strong>
+          <strong id="popupStrutturaPreview">€0.00</strong>
         </div>
       </div>
 
       <div class="actions">
-        <button class="secondary-btn" id="cancelEntryBtn" type="button">Annulla</button>
-        <button class="primary-btn" id="saveEntryBtn" type="button">Salva</button>
+        <button class="secondary-btn" type="button" id="cancelPopupBtn">Annulla</button>
+        <button class="primary-btn" type="button" id="savePopupBtn">Salva</button>
       </div>
-    </div>
-  </div>
-
-  <div id="calendarModal" class="popup hidden">
-    <div class="popup-box large-popup">
-      <div class="popup-head">
-        <div>
-          <h2>Calendario completo</h2>
-          <p class="popup-subtitle">Numero registrazioni giorno per giorno.</p>
-        </div>
-        <button class="close-btn" id="closeCalendarModalBtn" type="button">✕</button>
-      </div>
-      <div class="calendar-modal-top">
-        <button class="small-action-btn" id="calendarPrevBtn" type="button">◀</button>
-        <strong id="calendarModalTitle"></strong>
-        <button class="small-action-btn" id="calendarNextBtn" type="button">▶</button>
-      </div>
-      <div class="calendar-weekdays">
-        <span>Lun</span><span>Mar</span><span>Mer</span><span>Gio</span><span>Ven</span><span>Sab</span><span>Dom</span>
-      </div>
-      <div id="calendarModalGrid" class="calendar-grid big-calendar"></div>
-    </div>
-  </div>
-
-  <div id="doctorDetailModal" class="popup hidden">
-    <div class="popup-box large-popup">
-      <div class="popup-head">
-        <div>
-          <h2 id="doctorDetailName">Dettaglio medico</h2>
-          <p class="popup-subtitle">Disponibilità e prestazioni principali.</p>
-        </div>
-        <button class="close-btn" id="closeDoctorDetailBtn" type="button">✕</button>
-      </div>
-      <div>
-        <div class="picker-title">Giorni presenza</div>
-        <div id="doctorAvailabilityChips" class="availability-grid"></div>
-      </div>
-      <div class="doctor-detail-cards">
-        <div class="card report-mini-card"><span>Prestazioni salvate</span><strong id="doctorServiceCount">0</strong></div>
-        <div class="card report-mini-card"><span>Registrazioni totali</span><strong id="doctorEntryCount">0</strong></div>
-      </div>
-      <div class="page-head compact-head"><h3>Prestazioni del medico</h3></div>
-      <div id="doctorDetailServices" class="cards-list modal-list"></div>
     </div>
   </div>
 
