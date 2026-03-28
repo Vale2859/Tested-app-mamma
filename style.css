@@ -1458,3 +1458,64 @@ button{
   .menu-icon{font-size:1.15rem;}
   .popup-box{max-height:min(84vh,760px); padding:14px;}
 }
+
+
+/* === iPhone / PWA fixes finali === */
+html, body{
+  width:100%;
+  min-height:100%;
+  overflow-x:hidden;
+  overscroll-behavior-x:none;
+}
+
+:root{
+  --app-height:100dvh;
+}
+
+body{
+  min-height:var(--app-height);
+}
+
+.app-shell{
+  min-height:var(--app-height);
+  padding-bottom:calc(env(safe-area-inset-bottom) + 2px);
+}
+
+.main-content{
+  min-height:calc(var(--app-height) - 120px);
+  padding-top:12px;
+  scroll-behavior:smooth;
+}
+
+.top-cards{
+  padding-top:2px;
+}
+
+.menu{
+  left:50%;
+  transform:translateX(-50%);
+  width:min(100%, 480px);
+  max-width:480px;
+  box-sizing:border-box;
+}
+
+.popup{
+  padding-top:calc(env(safe-area-inset-top) + 8px);
+}
+
+.popup-box{
+  max-height:min(calc(var(--app-height) - 36px), 760px);
+}
+
+.chips-wrap{
+  align-items:flex-start;
+}
+
+@supports (-webkit-touch-callout:none){
+  body{
+    min-height:-webkit-fill-available;
+  }
+  .app-shell{
+    min-height:-webkit-fill-available;
+  }
+}

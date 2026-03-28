@@ -233,6 +233,7 @@ function go(pageId, options = {}) {
     if (pageId === "fatturePage") renderInvoices();
     if (pageId === "calendarPage") renderCalendar();
   }
+  requestAnimationFrame(scrollAppToTop);
   saveUiState();
 }
 
@@ -277,12 +278,9 @@ function suggestedPopupDate(forcedDate) {
 
 function getFrequentPrestazioni(doctorId, search = "") {
   const q = search.trim().toLowerCase();
-  const counts = new Map();
-  entries.filter((entry) => !doctorId || entry.doctorId === doctorId).forEach((entry) => counts.set(entry.prestazione, (counts.get(entry.prestazione) || 0) + 1));
-  const frequent = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "it")).map(([name]) => name);
+  if (!doctorId) return [];
   const configured = getDoctorPrestazioni(doctorId).map((item) => item.name);
-  const merged = [...new Set([...configured, ...frequent, ...DEFAULT_PRESTAZIONI])];
-  return merged.filter((name) => !q || name.toLowerCase().includes(q)).slice(0, 16);
+  return configured.filter((name) => !q || name.toLowerCase().includes(q)).slice(0, 24);
 }
 
 function renderPrestazioneChips() {
@@ -291,7 +289,9 @@ function renderPrestazioneChips() {
   const wrap = document.getElementById("popupPrestazioneChips");
   if (!wrap) return;
   const items = getFrequentPrestazioni(doctorId, search);
-  wrap.innerHTML = items.map((name, idx) => `<button class="chip-btn ${idx < 4 ? "primary" : ""}" type="button" data-chip="${escapeHtml(name)}">${escapeHtml(name)}</button>`).join("") || `<span class="page-subtitle">Nessuna prestazione trovata</span>`;
+  wrap.innerHTML = items.length
+    ? items.map((name, idx) => `<button class="chip-btn ${idx < 4 ? "primary" : ""}" type="button" data-chip="${escapeHtml(name)}">${escapeHtml(name)}</button>`).join("")
+    : `<span class="page-subtitle">Nessuna prestazione salvata per questo medico</span>`;
   wrap.querySelectorAll("[data-chip]").forEach((btn) => btn.addEventListener("click", () => {
     document.getElementById("popupPrestazione").value = btn.dataset.chip;
     document.getElementById("popupPrestazioneSearch").value = "";
@@ -672,7 +672,17 @@ function setupEventListeners() {
   document.getElementById("closePopupBtn").addEventListener("click", closeEntryPopup);
   document.getElementById("cancelPopupBtn").addEventListener("click", closeEntryPopup);
   document.getElementById("savePopupBtn").addEventListener("click", saveEntry);
-  document.getElementById("popupDoctorSelect").addEventListener("change", () => { renderPrestazioneChips(); applyRegisteredPercentForPopup(); });
+  document.getElementById("popupDoctorSelect").addEventListener("change", () => {
+    if (!editingEntryId) {
+      document.getElementById("popupPrestazione").value = "";
+      document.getElementById("popupPrestazioneSearch").value = "";
+      document.getElementById("popupPercMedico").value = 60;
+      document.getElementById("popupPercStruttura").value = 40;
+      updatePopupPreview();
+    }
+    renderPrestazioneChips();
+    applyRegisteredPercentForPopup();
+  });
   document.getElementById("popupPrestazioneSearch").addEventListener("input", renderPrestazioneChips);
   document.getElementById("popupPrestazione").addEventListener("change", applyRegisteredPercentForPopup);
   document.getElementById("popupPrestazione").addEventListener("blur", applyRegisteredPercentForPopup);
@@ -714,7 +724,24 @@ function unlockWithPin() {
   input.select();
 }
 
+
+function setAppHeight() {
+  document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
+}
+
+function scrollAppToTop() {
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  const activePage = document.querySelector(".page.active");
+  if (activePage) activePage.scrollTop = 0;
+  const mainContent = document.querySelector(".main-content");
+  if (mainContent) mainContent.scrollTop = 0;
+}
+
 function boot() {
+  setAppHeight();
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
   loadData();
   document.getElementById("doctorDetailMonth").value = currentMonthISO();
   document.getElementById("fattureDateFrom").value = monthStartISO(currentMonthISO());
@@ -729,7 +756,14 @@ function boot() {
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) { lastHiddenAt = Date.now(); return; }
     if (isUnlocked && lastHiddenAt && Date.now() - lastHiddenAt > 5000) lockApp();
+    setTimeout(scrollAppToTop, 60);
   });
+  window.addEventListener("resize", setAppHeight);
+  window.addEventListener("orientationchange", () => { setAppHeight(); setTimeout(scrollAppToTop, 60); });
+  window.addEventListener("pageshow", () => { setAppHeight(); setTimeout(scrollAppToTop, 60); setTimeout(scrollAppToTop, 260); });
+  setTimeout(scrollAppToTop, 40);
+  setTimeout(scrollAppToTop, 180);
+  setTimeout(scrollAppToTop, 500);
 }
 
 document.addEventListener("DOMContentLoaded", boot);
